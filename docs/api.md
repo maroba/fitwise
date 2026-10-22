@@ -55,6 +55,13 @@
    :members: Band, confidence_band, prediction_band, model_jacobian
 ```
 
+## Bootstrap and profile likelihood
+
+```{eval-rst}
+.. automodule:: fitwise.intervals
+   :members: bootstrap, profile, BootstrapResult, ProfileResult, Interval
+```
+
 ## Warnings
 
 ```{eval-rst}

@@ -60,6 +60,14 @@ If a name occurs twice, prefixes are added automatically:
 
 Choose your own prefixes with `gaussian.with_prefix("peak_")`.
 
+## Linear models need no starting values
+
+If a model is linear in its parameters, such as a line, a polynomial, or `a·sin(x) + b·x²`,
+fitwise recognizes this automatically and solves the problem directly, without iterations or
+starting values. The report then shows `Linear least squares (direct)` and `not needed (linear
+model)`. This also works for your own functions, and it reaches the certified values of the
+NIST linear reference datasets, including the notoriously ill-conditioned Filip polynomial.
+
 ## Starting values
 
 For each parameter, the first applicable rule wins, and the report shows which one:

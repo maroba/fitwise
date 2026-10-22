@@ -18,7 +18,8 @@ from fitwise._validate import (
     normalize_bounds,
     validate_data,
 )
-from fitwise.backends import Backend, FitProblem, LeastSquaresBackend
+from fitwise.backends import Backend, FitProblem, LeastSquaresBackend, LinearBackend
+from fitwise.backends.linear import is_linear
 from fitwise.model import Model, as_model
 from fitwise.result import FitResult, build_result
 
@@ -27,7 +28,6 @@ __all__ = ["fit"]
 Method = Literal["auto", "trf", "lm", "linear", "odr", "multistart"]
 
 _PLANNED = {
-    "linear": "0.2",
     "multistart": "0.2",
     "odr": "0.3",
 }
@@ -72,9 +72,10 @@ def fit(
         ``{name: value}`` of parameters held constant.
     loss : str
         Only ``"linear"`` (ordinary least squares) is supported so far.
-    method : {"auto", "trf", "lm"}
-        Solver. ``"auto"`` currently selects Trust Region Reflective, which also handles
-        bounds; ``"lm"`` is Levenberg–Marquardt without bounds.
+    method : {"auto", "linear", "trf", "lm"}
+        Solver. ``"auto"`` solves models that are linear in their parameters directly (no
+        starting values needed) and uses Trust Region Reflective otherwise. ``"lm"`` is
+        Levenberg–Marquardt without bounds.
     scale_covar : bool, optional
         Multiply the covariance by χ²/ndf. Default: ``False`` with ``yerr`` (uncertainties are
         taken as absolute), ``True`` without.
@@ -131,6 +132,8 @@ def fit(
     _check_start(problem, strategies)
 
     backend, reason = _select_backend(method, problem)
+    if isinstance(backend, LinearBackend):
+        strategies.update(dict.fromkeys(problem.free_names, "not needed (linear model)"))
     solved = backend.solve(problem)
     result = build_result(
         problem,
@@ -218,7 +221,13 @@ def _check_start(problem: FitProblem, strategies: Mapping[str, str]) -> None:
 
 def _select_backend(method: str, problem: FitProblem) -> tuple[Backend, str]:
     if method == "auto":
-        return LeastSquaresBackend("trf"), "auto"
+        if is_linear(problem):
+            return LinearBackend(), "auto: linear in the parameters"
+        return LeastSquaresBackend("trf"), "auto: nonlinear"
+    if method == "linear":
+        if not is_linear(problem):
+            raise ValueError("method='linear' needs a model that is linear in its parameters")
+        return LinearBackend(), "requested"
     if method == "trf":
         return LeastSquaresBackend("trf"), "requested"
     if method == "lm":
@@ -227,4 +236,4 @@ def _select_backend(method: str, problem: FitProblem) -> tuple[Backend, str]:
         return LeastSquaresBackend("lm"), "requested"
     if method in _PLANNED:
         raise NotImplementedError(f"method={method!r} is planned for fitwise {_PLANNED[method]}")
-    raise ValueError(f"unknown method {method!r}; choose 'auto', 'trf' or 'lm'")
+    raise ValueError(f"unknown method {method!r}; choose 'auto', 'linear', 'trf' or 'lm'")

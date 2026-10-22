@@ -6,6 +6,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Confidence and prediction bands: `result.confidence_band(x)`, `result.prediction_band(x)`,
+  and `result.plot(band="confidence" | "prediction" | None)` (confidence band by default).
+- `result.params.as_ufloat()`: correlated `uncertainties` values for error propagation.
+- Monte Carlo calibration tests for standard errors and bands.
+
 ## [0.2.0] - 2026-10-22
 
 Automatic solver and starting values for any model, text models and robust fits.

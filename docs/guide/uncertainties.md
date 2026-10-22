@@ -19,6 +19,45 @@ The uncertainties are calibrated. In the radioactive-decay example, repeated wit
 different random seeds, the pulls (fit − truth)/σ have a mean of −0.06 and a standard deviation
 of 1.03, as they should.
 
+## Confidence and prediction bands
+
+```python
+band = result.confidence_band(x_new, level=0.95)   # where the true curve lies
+band = result.prediction_band(x_new, level=0.95)   # where a new measurement falls
+band.lower, band.center, band.upper
+result.plot(band="prediction")                     # default: band="confidence"
+```
+
+Both bands use the delta method, σ_f(x)² = J(x) C J(x)ᵀ, where J(x) holds the derivatives of the
+model with respect to the parameters. With `yerr`, the uncertainties count as known and the
+bands use the normal distribution. Without `yerr`, the scatter is estimated from the residuals,
+and the bands use Student's t with ndf degrees of freedom. The prediction band adds the scatter
+of a new measurement: `yerr`, or `yerr_new=` if `yerr` differs between points, or the residual
+scatter without `yerr`.
+
+In Monte Carlo tests (400 data sets each, peaks, decays and lines), 95 % bands cover the true
+curve and new measurements in 93–97 % of the cases.
+
+## Calculations with fitted parameters
+
+`result.params.as_ufloat()` returns the parameters as correlated values of the
+[uncertainties](https://uncertainties.readthedocs.io) package (`pip install "fitwise[units]"`).
+Error propagation then includes the correlations automatically:
+
+```python
+u = result.params.as_ufloat()
+Q = np.pi * u["freq"] * u["tau"]
+print(f"{Q:.1uS}")       # e.g. 15.55(9)
+```
+
+## How often ±1σ contains the truth
+
+With `yerr`, the interval value ± standard error contains the true value in 68.3 % of the
+cases, as expected. Without `yerr`, σ itself is estimated from the residuals. With few
+degrees of freedom the interval then covers less: with 10 degrees of freedom only 65.9 %
+(Student's t). The bands account for this, but the plain standard error cannot. fitwise's
+Monte Carlo tests check both cases.
+
 ## Reading χ²/ndf
 
 With correct uncertainties and a correct model, χ²/ndf scatters around 1, and the p-value is

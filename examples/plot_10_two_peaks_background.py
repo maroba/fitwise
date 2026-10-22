@@ -56,12 +56,8 @@ for prefix in ("a_", "b_"):
     print(f"line {prefix[0]}: {655 + cen.value:.3f} ± {cen.stderr:.3f} nm")
 
 # %%
-# The line ratio with its uncertainty, taking the correlation of the two amplitudes into
-# account through the covariance matrix:
-i, j = result.free_names.index("a_amp"), result.free_names.index("b_amp")
-cov = result.covariance
-a, b = p["a_amp"], p["b_amp"]
-ratio = b / a
-grad = np.array([-b / a**2, 1 / a])
-sub = cov[np.ix_([i, j], [i, j])]
-print(f"I_b / I_a = {ratio:.4f} ± {np.sqrt(grad @ sub @ grad):.4f}")
+# The line ratio with its uncertainty. ``as_ufloat()`` takes the correlation of the two
+# amplitudes into account automatically:
+u = result.params.as_ufloat()
+ratio = u["b_amp"] / u["a_amp"]
+print(f"I_b / I_a = {ratio:.2uS}")

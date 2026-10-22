@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -73,8 +74,16 @@ class Parameters(Mapping[str, Parameter]):
     Supports item access (``params["sigma"]``) and attribute access (``params.sigma``).
     """
 
-    def __init__(self, params: list[Parameter]) -> None:
+    def __init__(
+        self,
+        params: list[Parameter],
+        *,
+        covariance: FloatArray | None = None,
+        free_names: tuple[str, ...] = (),
+    ) -> None:
         self._params = {p.name: p for p in params}
+        self._covariance = covariance
+        self._free_names = free_names
 
     def __getitem__(self, name: str) -> Parameter:
         try:
@@ -109,6 +118,36 @@ class Parameters(Mapping[str, Parameter]):
     def errors_dict(self) -> dict[str, float | None]:
         """Return the standard errors as ``{name: stderr}``."""
         return {n: p.stderr for n, p in self._params.items()}
+
+    def as_ufloat(self) -> dict[str, Any]:
+        """Return the parameters as correlated ``uncertainties.ufloat`` values.
+
+        Calculations with the returned values propagate errors including the correlations
+        between parameters. Fixed parameters are returned as plain floats. Requires the
+        ``uncertainties`` package (``pip install 'fitwise[units]'``).
+
+        Examples
+        --------
+        >>> import fitwise as fw
+        >>> x = np.linspace(0, 1, 20)
+        >>> r = fw.fit(fw.models.linear, x, 2 * x + 1 + 0.01 * np.sin(17 * x))
+        >>> u = r.params.as_ufloat()
+        >>> round((u["slope"] + u["intercept"]).nominal_value, 2)
+        3.0
+        """
+        try:
+            from uncertainties import correlated_values
+        except ImportError:
+            raise ImportError(
+                "as_ufloat() needs the uncertainties package: pip install 'fitwise[units]'"
+            ) from None
+        if self._covariance is None:
+            raise ValueError("the covariance matrix is not available for this fit")
+        values = [self._params[n].value for n in self._free_names]
+        correlated = dict(
+            zip(self._free_names, correlated_values(values, self._covariance), strict=True)
+        )
+        return {n: correlated.get(n, p.value) for n, p in self._params.items()}
 
     def as_array(self) -> FloatArray:
         """Return the best-fit values as an array in model order."""

@@ -25,13 +25,16 @@ axes[0].set_ylabel("angle (°)")
 axes[1].set_xlabel("t (s)")
 
 # %%
-# The quality factor of the pendulum is Q = π f τ.
-f, tau = result.params["freq"], result.params["tau"]
-q = np.pi * f.value * tau.value
-q_err = q * np.hypot(f.stderr / f.value, tau.stderr / tau.value)
-print(f"Q = {q:.1f} ± {q_err:.1f}")
+# The quality factor of the pendulum is Q = π f τ. ``as_ufloat()`` returns the parameters as
+# correlated values of the `uncertainties <https://uncertainties.readthedocs.io>`_ package, so
+# the error propagation automatically includes the correlation between f and τ:
+u = result.params.as_ufloat()
+Q = np.pi * u["freq"] * u["tau"]
+print(f"Q = {Q:.1uS}")
 
 # %%
-# The error propagation above treats f and τ as independent. Their correlation is small, so
-# this is justified here. In general, use the full ``result.covariance``.
-print(f"corr(freq, tau) = {result.correlations()[('freq', 'tau')]:+.3f}")
+# The 95 % prediction band shows where new readings of the encoder are expected:
+fig, axes = result.plot(band="prediction", residuals=False)
+axes[0].set_xlim(0, 5)
+axes[0].set_ylabel("angle (°)")
+axes[0].set_xlabel("t (s)")

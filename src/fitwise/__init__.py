@@ -14,7 +14,7 @@ from fitwise.parameters import Parameter, Parameters
 from fitwise.result import FitResult
 from fitwise.warnings import FitWarning
 
-__version__ = "0.1.0"
+__version__ = "0.2.0.dev0"
 
 __all__ = [
     "CompositeModel",

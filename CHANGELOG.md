@@ -15,15 +15,19 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   benchmark of 32 lab models). `method="multistart"` forces it for all parameters.
 - Benchmark catalog of 32 realistic models in the tests.
 
-### Fixed
-
-- Uncertainties were reported as unavailable ("singular covariance") when the starting values
-  were off by many orders of magnitude, although the fit itself had converged.
-
 ### Changed
 
 - `method="auto"` reports why it chose a solver: `auto: linear in the parameters` or
   `auto: nonlinear`.
+
+## [0.1.1] - 2026-10-22
+
+### Fixed
+
+- Uncertainties were reported as unavailable ("singular covariance") when the starting values
+  were off by many orders of magnitude, although the fit itself had converged. The covariance
+  now uses the Jacobian of the last solver run, which starts at the solution, instead of the
+  first run's Jacobian normalized by the starting values.
 
 ## [0.1.0] - 2026-10-22
 
@@ -42,5 +46,6 @@ First public release.
 - Text report, `plot()` with residual panel, `to_dict()` for JSON export.
 - Documentation: quickstart, guides on models and uncertainties, 10 gallery examples.
 
-[Unreleased]: https://github.com/maroba/fitwise/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/maroba/fitwise/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/maroba/fitwise/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/maroba/fitwise/releases/tag/v0.1.0

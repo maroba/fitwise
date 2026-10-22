@@ -77,8 +77,7 @@ Gewichte gibt es bewusst nur über `yerr`, nicht über ein zusätzliches `weight
 | Situation | Solver |
 |---|---|
 | Modell linear in den Parametern, kein `xerr`, `loss="linear"` | Direkte Lösung: `numpy.linalg.lstsq`, mit Bounds `scipy.optimize.lsq_linear`. Keine Startwerte nötig. |
-| Nichtlinear, keine Bounds | Levenberg-Marquardt via `lmfit` |
-| Nichtlinear mit Bounds | Trust-Region-Reflective via `lmfit` (`least_squares`) |
+| Nichtlinear, mit oder ohne Bounds | Trust-Region-Reflective (`scipy.optimize.least_squares`) mit normierten Parametern und Neustarts (ADR 5); Levenberg-Marquardt wählbar mit `method="lm"` |
 | Nicht konvergiert oder Heuristik unsicher | Multi-Start (Latin-Hypercube innerhalb plausibler Skalen), bester Lauf gewinnt |
 | `xerr` angegeben | Orthogonal Distance Regression via `odrpack` (ODRPACK95, unterstützt Bounds) |
 | `loss != "linear"` | `scipy.optimize.least_squares` mit der gewählten Loss-Funktion |
@@ -115,7 +114,7 @@ Eingebaute Modelle haben eine physikalische Bedeutung, dokumentierte Parameter (
 | Skalen | `powerlaw`, `arrhenius` |
 | Stückweise | `linear_breakpoint` |
 
-**Komposition:** `fw.models.gaussian + fw.models.linear`. Bei Namenskollisionen werden Präfixe automatisch vergeben (`g1_amp`, `g2_amp`), alternativ explizit: `fw.models.gaussian(prefix="peak_")`. Die Startwerte komponierter Modelle werden sequenziell geschätzt (Untergrund zuerst, dann Peaks auf den Residuen).
+**Komposition:** `fw.models.gaussian + fw.models.linear`. Bei Namenskollisionen werden Präfixe automatisch vergeben (`g1_amp`, `g2_amp`), alternativ explizit: `fw.models.gaussian.with_prefix("peak_")`. Die Startwerte komponierter Modelle werden sequenziell geschätzt (Untergrund zuerst, dann Peaks auf den Residuen).
 
 ### 4.5 Unsicherheiten als erstklassige Bürger
 
@@ -138,7 +137,7 @@ Eingebaute Modelle haben eine physikalische Bedeutung, dokumentierte Parameter (
 
 ```
 Model:      gaussian(x; amp, cen, sigma) + linear(x; slope, intercept)
-Method:     Levenberg-Marquardt (lmfit, auto: nonlinear, no bounds)
+Method:     Trust Region Reflective (scipy least_squares) (auto)
 Converged:  yes (14 evals)
 Data:       128 points, yerr given (absolute)
 Start:      amp, cen, sigma: peak heuristic · slope, intercept: edge baseline
@@ -177,7 +176,7 @@ Erzeugt Daten mit Fehlerbalken, Fitkurve (fein abgetastet, nicht nur an den Date
 ## 5. Nicht-Ziele
 
 - Kein eigener Optimierer. Alle numerischen Kerne kommen aus `scipy`, `lmfit` und `odrpack`.
-- Keine Bayes-Inferenz und kein MCMC (Verweis auf `emcee`, `PyMC`). Ein Export zu `emcee` über `result.lmfit` bleibt möglich.
+- Keine Bayes-Inferenz und kein MCMC (Verweis auf `emcee`, `PyMC`). Ein Export zu `emcee` über `result.raw` bzw. lmfit bleibt möglich.
 - Keine GUI. Ein Jupyter-Widget ist ein denkbares Add-on, nicht Teil des Kerns.
 - Keine Datenimport-Funktionen (das ist ein anderes Projekt).
 - Keine impliziten Datenvorverarbeitungen (Glätten, Untergrundabzug, Ausreißerentfernung). Robuste Fits über `loss=` sind der vorgesehene Weg.
@@ -194,7 +193,7 @@ src/fitwise/
   models/          eingebaute Modelle, je Datei: Funktion + Metadaten + guess()
   guess/           Startwert-Kaskade: roles.py, linearize.py, multistart.py
   linear.py        Linearitätserkennung + direkte Lösung
-  backends/        base.py (Protokoll), lmfit_.py, linear_.py, odr_.py, robust_.py
+  backends/        base.py (Protokoll), least_squares.py, später linear.py, odr.py
   result.py        FitResult, Parameter, Gütemaße, Bänder
   report.py        Text, Markdown, LaTeX, HTML; Rundung
   warnings.py      FitWarning-Hierarchie
@@ -217,7 +216,7 @@ src/fitwise/
 2. **Keine stillen Entscheidungen.** Jede Automatik (Solverwahl, Startwerte, Kovarianzskalierung) ist im Result dokumentiert und überschreibbar.
 3. **Warnungen statt falscher Zahlen.** Nicht konvergiert, Parameter an der Grenze, χ²/ndf außerhalb des 99-%-Intervalls, Korrelation > 0.95, singuläre Kovarianz, Unsicherheit > 100 %: Alles erscheint in `result.warnings` und im Report und wird als `FitWarning` über das `warnings`-Modul emittiert. Ein nicht konvergierter Fit hat `result.ok == False`.
 4. **Reproduzierbar.** `result.to_dict()` enthält alles, um den Fit exakt zu wiederholen: Modell-Identität, Daten-Hash, Startwerte inkl. Strategie, Solver und Optionen, Seed des Multi-Starts, Versionen.
-5. **Dünn bleiben.** Wer mehr braucht, bekommt mit `result.raw` das Objekt des darunterliegenden Backends (z. B. `lmfit.ModelResult`).
+5. **Dünn bleiben.** Wer mehr braucht, bekommt mit `result.raw` das Objekt des darunterliegenden Backends (z. B. `scipy.optimize.OptimizeResult`).
 6. **Schnell genug für Pipelines.** Der Overhead gegenüber direktem `curve_fit` liegt bei einem Gaußfit mit 1000 Punkten unter 5 ms. Lazy Imports für alle optionalen Pakete.
 
 ## 8. Roadmap
@@ -226,7 +225,7 @@ Details, Arbeitspakete und Aufwände stehen in [`PLAN.md`](PLAN.md).
 
 | Version | Kern | Ziel |
 |---|---|---|
-| **v0.1 – MVP** | `fit()` mit `yerr`/`p0`/`bounds`/`fixed`, lmfit-Backend, 10 eingebaute Modelle mit Heuristiken, Komposition `+`, `FitResult`, Text-Report, Warnungen, `plot()`, `to_dict()` | Gaußfit in 3 Zeilen; erste Testnutzer:innen |
+| **v0.1 – MVP** | `fit()` mit `yerr`/`p0`/`bounds`/`fixed`, `least_squares`-Backend, 10 eingebaute Modelle mit Heuristiken, Komposition `+`, `FitResult`, Text-Report, Warnungen, `plot()`, `to_dict()` | Gaußfit in 3 Zeilen; erste Testnutzer:innen |
 | **v0.2 – Automatik** | Linearitätserkennung + direkte Lösung, Startwert-Kaskade für freie Funktionen (Rollenanalyse, Linearisierung, Multi-Start), String-Modelle, robuste Losses | „Eigene Funktion ohne `p0`“ funktioniert |
 | **v0.3 – Unsicherheiten** | ODR-Backend (`odrpack`), Konfidenz-/Prädiktionsbänder, Bootstrap, Profile-Likelihood, `pint`/`uncertainties` | x- und y-Fehler; vollständige Fehlerrechnung |
 | **v0.4 – Skalierung & Export** | `fit_many()` inkl. globaler Fits, `FitCollection`/DataFrame, Markdown/LaTeX/HTML-Export, Stil-Backend | Pipeline- und Publikationsreife |
@@ -265,7 +264,8 @@ Details, Arbeitspakete und Aufwände stehen in [`PLAN.md`](PLAN.md).
 |---|---|---|
 | Lizenz | **BSD-3-Clause** | Gleich wie lmfit, scipy, numpy; keine Reibung im Ökosystem |
 | String-Modelle | **v0.2**, über `asteval` (kommt mit lmfit) | Keine neue Pflichtabhängigkeit; sympy nur optional für Ableitungen |
-| Komposition `+` | **v0.1** | Wird für reale Spektren sofort gebraucht (Peak + Untergrund), mit lmfit `CompositeModel` günstig |
+| Komposition `+` | **v0.1** | Wird für reale Spektren sofort gebraucht (Peak + Untergrund) |
+| Nichtlinearer Solver | **`scipy.optimize.least_squares`** direkt statt lmfit-Minimizer | Nur so 27/27 NIST-Datensätze von beiden Startpunkten (ADR 5); lmfit bleibt für `conf_interval` und `asteval` |
 | ODR-Implementierung | **`odrpack`** statt `scipy.odr` | `scipy.odr` ist deprecated; ODRPACK95 unterstützt Bounds |
 | `weights`-Argument | **entfällt** | Doppelte Semantik zu `yerr`; Fehlerquelle |
 | Kovarianzskalierung | mit `yerr` absolut, ohne `yerr` skaliert, beides im Report | Entspricht der physikalischen Erwartung; kein stilles `absolute_sigma` |

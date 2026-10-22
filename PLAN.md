@@ -75,11 +75,31 @@ Fehlschläge von Start 1: Lanczos3, Kirby2, Hahn1, BoxBOD, Bennett5. Das v0.1-Zi
 - **NIST StRD von Startpunkt 1:** alle 27 Datensätze (Marker `nist`).
 - **Report-Snapshots:** Golden-File-Tests für das Textlayout.
 
+### Stand (2026-10-22)
+
+Erledigt: 1.1–1.11 (Branch `feat/mvp-core`). Offen: 1.12 (Doku und Galerie-Beispiele).
+
+Abweichungen vom Plan:
+
+- **1.4:** Der Risiko-Checkpoint hat gegriffen. Statt des lmfit-Minimizers ruft das Backend
+  `scipy.optimize.least_squares` direkt auf (TRF, 3-Punkt-Jacobi, normierte Parameter,
+  Neustarts). Nur so werden alle 27 NIST-Probleme von beiden Startpunkten gelöst; Messungen in
+  ADR 5.
+- **Referenzvergleich:** Gegen `curve_fit` stimmen die Werte auf < 1e-5 Standardfehler und die
+  Kovarianz auf 1e-4 relativ überein. Das 1e-8-Ziel ist bei Parametern nahe 0 nicht sinnvoll,
+  weil beide Solver an einer Toleranz stoppen (gleiches χ² auf 15 Stellen).
+- **Konvergenz ohne Startwerte:** Alle 10 Modelle und 4 typische Kompositionen konvergieren in
+  100/100 zufälligen Fällen (`tests/test_models.py`, Ziel war ≥ 99 %).
+- **`from_dict()`** entfällt vorerst. Eine Python-Funktion lässt sich nicht aus JSON
+  rekonstruieren; `to_dict()` enthält alles, um den Fit mit demselben Modell zu wiederholen.
+- **Kompatibilität:** Bei scipy 1.12 ignoriert `least_squares(method="lm")` den 3-Punkt-Jacobi
+  stillschweigend; fitwise berechnet ihn für LM deshalb selbst.
+
 ### Definition of Done v0.1
 
-- [ ] Die drei Zeilen aus Vision §2 laufen und liefern Report und Plot
-- [ ] NIST StRD von Startpunkt 1: 27/27
-- [ ] Coverage ≥ 90 %, `mypy --strict` grün
+- [x] Die drei Zeilen aus Vision §2 laufen und liefern Report und Plot
+- [x] NIST StRD von Startpunkt 1: 27/27 (auch von Startpunkt 2)
+- [x] Coverage ≥ 90 %, `mypy --strict` grün (98 %)
 - [ ] Doku online mit Quickstart und 10 Beispielen
 - [ ] Release `0.1.0` auf PyPI; Ankündigung an 5–10 Testnutzer:innen mit Feedback-Formular
 
@@ -173,7 +193,7 @@ Fehlschläge von Start 1: Lanczos3, Kirby2, Hahn1, BoxBOD, Bennett5. Das v0.1-Zi
 
 | Zeitpunkt | Prüfung | Bei Nichterfüllung |
 |---|---|---|
-| Ende 1.4 | lmfit-Backend deckt Bounds + Fixierung + Kovarianz-Semantik sauber ab | Direkt `least_squares` nutzen, lmfit nur für `conf_interval` |
+| Ende 1.4 | lmfit-Backend deckt Bounds + Fixierung + Kovarianz-Semantik sauber ab | Direkt `least_squares` nutzen, lmfit nur für `conf_interval` → **eingetreten**, siehe ADR 5 |
 | Ende 2.3 | Rollenanalyse ≥ 60 % korrekt | Umfang reduzieren (siehe Phase 2) |
 | Ende 3.1 | `odrpack` stabil und auf PyPI für alle Plattformen verfügbar | ODR mit eigener Implementierung über `least_squares` auf erweitertem Residuum |
 | v0.4 | ≥ 5 aktive externe Nutzer:innen | Positionierung überdenken, bevor v1.0-Aufwand investiert wird |

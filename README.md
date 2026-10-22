@@ -5,8 +5,8 @@
 [![Tests](https://github.com/maroba/fitwise/actions/workflows/test.yml/badge.svg)](https://github.com/maroba/fitwise/actions/workflows/test.yml)
 [![License: BSD-3-Clause](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 
-> **Status: pre-alpha.** The API below is the design target for v0.1 and is not implemented yet.
-> See [`PLAN.md`](PLAN.md) for the roadmap.
+> **Status: pre-alpha.** The core of v0.1 works (fit, built-in models, report, plot, export),
+> but the API may still change. See [`PLAN.md`](PLAN.md) for the roadmap.
 
 `fitwise` is an ergonomic layer over [`lmfit`](https://lmfit.github.io/lmfit-py/) and
 [`scipy`](https://scipy.org/) for curve fitting in the lab. It brings no new solver of its own.

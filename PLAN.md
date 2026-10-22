@@ -130,6 +130,8 @@ Abweichungen vom Plan:
 
 **Stand 2.1/2.2 (2026-10-22): erledigt.** Prüfung zusätzlich gegen die NIST-StRD-Linear-Suite (11 Datensätze, ADR 6): Filip 7.4 Stellen, alle anderen ≥ 7.7 außer Wampler5 (5.7 Stellen bei Standardfehlern von 10³–10⁷ × Wert).
 
+**Release 0.2.0: 2026-10-22.** Offen aus der DoD: NIST ohne Startwerte für Gauss2/Gauss3 (siehe ADR 7).
+
 **DoD v0.2:** NIST StRD ohne Startwerte: 100 % niedrige/mittlere, ≥ 80 % höhere Schwierigkeit; Konvergenzrate der Benchmarksuite ≥ 85 %; `result.guess_strategy` für jeden Parameter gesetzt und im Report sichtbar.
 
 **Stand 2.3–2.6, 2.9 (2026-10-22): erledigt, mit Abweichung (ADR 7).** Die Benchmarksuite (2.9, 32 Modelle) wurde zuerst gebaut. Multi-Start mit Variable Projection und datenbasierten Kandidaten (2.5, 2.6) erreicht 99.7 % von 3300 Fits; die Rollenanalyse (2.3, 2.4) wurde deshalb nicht implementiert. DoD v0.2: Benchmark ≥ 85 % ✅ (99.7 %); NIST ohne Startwerte: hoch 8/8 ✅, niedrig 7/8 und mittel 10/11 ❌ (Gauss2, Gauss3: zwei stark überlappende Peaks plus Zerfall als eine Black-Box-Funktion; mit eingebauten Modellen lösbar). `guess_strategy` für jeden Parameter gesetzt ✅.

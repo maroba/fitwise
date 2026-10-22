@@ -6,8 +6,9 @@
 [![PyPI](https://img.shields.io/pypi/v/fitwise.svg)](https://pypi.org/project/fitwise/)
 [![License: BSD-3-Clause](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 
-> **Status: alpha (0.1).** Fitting, built-in models, report, plot and export work and are
-> tested against the NIST reference data. The API may still change before 1.0.
+> **Status: alpha (0.2).** Fitting, built-in and text models, automatic starting values,
+> robust fits, report, plot and export work and are tested against the NIST reference data.
+> The API may still change before 1.0.
 > **Documentation: https://maroba.github.io/fitwise/**
 
 `fitwise` is an ergonomic layer over [`lmfit`](https://lmfit.github.io/lmfit-py/) and
@@ -27,7 +28,9 @@ result.params["sigma"]     # value, uncertainty, unit
 
 - **Picks the solver:** direct linear least squares when the model is linear in its parameters,
   Levenberg–Marquardt otherwise, and orthogonal distance regression when `xerr` is given.
-- **Finds starting values,** including for your own functions, and shows how it found them.
+- **Finds starting values,** including for your own functions and for models written as
+  text (`fw.fit("a*exp(-x/tau) + c", x, y)`), and shows how it found them.
+- **Resists outliers** on request: `loss="huber"` downweights them and marks them in the plot.
 - **Gives honest uncertainties:** a documented covariance convention, confidence and prediction
   bands, and bootstrap or profile likelihood on request.
 - **Warns instead of returning wrong numbers:** non-convergence, parameters at a bound, poor

@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-22
+
+Automatic solver and starting values for any model, text models and robust fits.
+
 ### Added
 
 - Linear models are detected automatically and solved directly, without starting values;
@@ -22,8 +26,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- `method="auto"` reports why it chose a solver: `auto: linear in the parameters` or
-  `auto: nonlinear`.
+- `method="auto"` reports why it chose a solver: `auto: linear in the parameters`,
+  `auto: nonlinear` or `auto: nonlinear, no starting values`.
+- Linear models are now solved directly instead of iteratively. Their results differ from
+  0.1 by far less than one standard error, and ill-conditioned problems are more accurate
+  (NIST Filip: 7.4 instead of 4.4 correct digits).
+- User functions without starting values no longer start all parameters at 1; they use the
+  multi-start, which costs about 60 ms instead of 10 ms per fit.
 
 ## [0.1.1] - 2026-10-22
 
@@ -51,6 +60,7 @@ First public release.
 - Text report, `plot()` with residual panel, `to_dict()` for JSON export.
 - Documentation: quickstart, guides on models and uncertainties, 10 gallery examples.
 
-[Unreleased]: https://github.com/maroba/fitwise/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/maroba/fitwise/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/maroba/fitwise/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/maroba/fitwise/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/maroba/fitwise/releases/tag/v0.1.0

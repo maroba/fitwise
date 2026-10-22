@@ -41,6 +41,7 @@ constant = Model(
     abbrev="c",
     formula=r"c",
     param_docs={"c": "constant offset"},
+    dims={"c": (0, 1)},
 )
 """Constant offset :math:`c`."""
 
@@ -54,6 +55,7 @@ linear = Model(
     abbrev="lin",
     formula=r"\mathrm{slope}\,x + \mathrm{intercept}",
     param_docs={"slope": "slope", "intercept": "value at x = 0"},
+    dims={"slope": (-1, 1), "intercept": (0, 1)},
 )
 """Straight line :math:`\\mathrm{slope}\\,x + \\mathrm{intercept}`."""
 
@@ -99,4 +101,5 @@ def polynomial(degree: int) -> Model:
         abbrev="p",
         formula=" + ".join(f"c_{i} x^{i}" for i in range(degree + 1)),
         param_docs={n: f"coefficient of x^{i}" for i, n in enumerate(names)},
+        dims={n: (-i, 1) for i, n in enumerate(names)},
     )

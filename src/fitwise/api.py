@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 import warnings
 from collections.abc import Callable, Mapping
+from dataclasses import replace
 from typing import Any, Literal
 
 import numpy as np
@@ -26,6 +27,7 @@ from fitwise.backends.odr import OdrBackend
 from fitwise.backends.robust import ROBUST_LOSSES, RobustBackend
 from fitwise.model import Model, as_model
 from fitwise.result import FitResult, build_result
+from fitwise.units import is_quantity, parameter_units, split, to_magnitude
 
 __all__ = ["fit"]
 
@@ -47,6 +49,7 @@ def fit(
     method: Method = "auto",
     scale_covar: bool | None = None,
     nan_policy: NanPolicy = "raise",
+    units: Mapping[str, Any] | None = None,
 ) -> FitResult:
     """Fit a model to data.
 
@@ -90,6 +93,9 @@ def fit(
         taken as absolute), ``True`` without.
     nan_policy : {"raise", "omit"}
         What to do with non-finite data points.
+    units : dict, optional
+        Units of parameters, e.g. ``{"tau": "s"}``, if ``x`` or ``y`` are pint quantities and
+        the model does not declare them (built-in models do). See :mod:`fitwise.units`.
 
     Returns
     -------
@@ -121,12 +127,38 @@ def fit(
         raise ValueError(f"loss_scale must be positive, got {loss_scale!r}")
     if loss != "linear" and method == "lm":
         raise ValueError("method='lm' does not support robust losses; use 'auto' or 'trf'")
-    data = validate_data(x, y, yerr, nan_policy, xerr)
+    x, x_unit = split(x, name="x")
+    y, y_unit = split(y, name="y")
+    for argument, err, unit in (("yerr", yerr, y_unit), ("xerr", xerr, x_unit)):
+        if is_quantity(err) and unit is None:
+            raise ValueError(f"{argument} has a unit, but {argument[0]} has none")
+    yerr, _ = split(yerr, y_unit, name="yerr")
+    xerr, _ = split(xerr, x_unit, name="xerr")
+    data = replace(validate_data(x, y, yerr, nan_policy, xerr), x_unit=x_unit, y_unit=y_unit)
 
     names = m.param_names
-    p0_given = dict(p0 or {})
-    fixed_given = dict(fixed or {})
-    bounds_given = normalize_bounds(bounds)
+    check_names("units", units or {}, names)
+    param_units = parameter_units(m.param_dims, x_unit, y_unit, units)
+
+    def strip(argument: str, mapping: Mapping[str, Any]) -> dict[str, Any]:
+        return {
+            n: to_magnitude(v, param_units.get(n), name=f"{argument}[{n!r}]")
+            for n, v in mapping.items()
+        }
+
+    p0_given = strip("p0", p0 or {})
+    fixed_given = strip("fixed", fixed or {})
+    bounds_given = normalize_bounds(
+        {
+            n: tuple(
+                None if b is None else to_magnitude(b, param_units.get(n), name=f"bounds[{n!r}]")
+                for b in pair
+            )
+            if isinstance(pair, (tuple, list)) and len(pair) == 2
+            else pair
+            for n, pair in (bounds or {}).items()
+        }
+    )
     for argument, mapping in (("p0", p0_given), ("bounds", bounds_given), ("fixed", fixed_given)):
         check_names(argument, mapping, names)
     fixed_values = {n: as_float("fixed", n, v) for n, v in fixed_given.items()}
@@ -170,6 +202,7 @@ def fit(
     result = build_result(
         problem,
         solved,
+        param_units=param_units,
         strategies=strategies,
         scale_covar=scale_covar,
         method_reason=reason,

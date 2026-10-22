@@ -24,6 +24,8 @@ class FitData:
     yerr: FloatArray | None
     n_omitted: int = 0
     xerr: FloatArray | None = None
+    x_unit: Any = None
+    y_unit: Any = None
 
     @property
     def n(self) -> int:

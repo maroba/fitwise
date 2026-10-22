@@ -84,6 +84,7 @@ exponential = Model(
     abbrev="e",
     formula=r"\mathrm{amp}\,e^{-x/\tau}",
     param_docs={"amp": "value at x = 0", "tau": "decay length (negative for growth)"},
+    dims={"amp": (0, 1), "tau": (1, 0)},
 )
 """Exponential decay ``amp * exp(-x/tau)``; add :data:`constant` for an offset."""
 
@@ -101,6 +102,7 @@ sigmoid = Model(
         "cen": "midpoint",
         "width": "transition width (negative for a falling step)",
     },
+    dims={"amp": (0, 1), "cen": (1, 0), "width": (1, 0)},
 )
 """Logistic step from 0 to ``amp`` centred at ``cen``; add :data:`constant` for an offset."""
 
@@ -114,6 +116,7 @@ powerlaw = Model(
     abbrev="pl",
     formula=r"\mathrm{amp}\,x^{k}",
     param_docs={"amp": "value at x = 1", "exponent": "power-law exponent"},
+    dims={"amp": None, "exponent": (0, 0)},  # unit of amp is y/x**exponent
 )
 """Power law ``amp * x**exponent``."""
 
@@ -132,5 +135,6 @@ damped_sine = Model(
         "phase": "phase in radians",
         "tau": "decay length of the envelope",
     },
+    dims={"amp": (0, 1), "freq": (-1, 0), "phase": (0, 0), "tau": (1, 0)},
 )
 """Exponentially damped sine oscillation."""

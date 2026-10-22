@@ -56,6 +56,14 @@ def model_jacobian(result: FitResult, x: ArrayLike) -> FloatArray:
     return np.column_stack(columns) if columns else np.zeros((n, 0))
 
 
+def _magnitude(result: FitResult, x: ArrayLike) -> FloatArray:
+    """``x`` as a plain array; quantities are converted to the unit of the fit's ``x``."""
+    from fitwise.units import split
+
+    magnitude, _ = split(x, result.data.x_unit, name="x")
+    return np.asarray(magnitude, dtype=float)
+
+
 def _quantile(result: FitResult, level: float) -> float:
     if not 0 < level < 1:
         raise ValueError(f"level must be between 0 and 1, got {level}")
@@ -74,7 +82,7 @@ def _curve_variance(result: FitResult, x: FloatArray) -> FloatArray:
 
 def confidence_band(result: FitResult, x: ArrayLike, level: float = 0.95) -> Band:
     """Band that contains the *true curve* with probability ``level`` at each ``x``."""
-    xa = np.asarray(x, dtype=float)
+    xa = _magnitude(result, x)
     center = np.broadcast_to(result.eval(xa), (len(xa),)).astype(float)
     half = _quantile(result, level) * np.sqrt(_curve_variance(result, xa))
     return Band(xa, center, center - half, center + half, level, "confidence")
@@ -89,7 +97,7 @@ def prediction_band(
     the same for all points, or the residual scatter if the fit had no ``yerr``. With
     ``scale_covar``, the scatter is scaled by χ²/ndf like the covariance.
     """
-    xa = np.asarray(x, dtype=float)
+    xa = _magnitude(result, x)
     if yerr_new is not None:
         noise = np.broadcast_to(np.asarray(yerr_new, dtype=float), xa.shape) ** 2
     elif result.yerr is not None:

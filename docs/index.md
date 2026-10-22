@@ -23,6 +23,7 @@ result.plot()
 - {doc}`guide/models`: built-in models, your own functions, composition, starting values
 - {doc}`guide/uncertainties`: what the error bars mean, χ²/ndf, warnings
 - {doc}`guide/robust`: fits that resist outliers
+- {doc}`guide/units`: fitting pint quantities, parameters with units
 - {doc}`auto_examples/index`: complete fits from typical lab experiments
 
 ```{toctree}
@@ -33,6 +34,7 @@ guide/quickstart
 guide/models
 guide/uncertainties
 guide/robust
+guide/units
 auto_examples/index
 api
 adr/index

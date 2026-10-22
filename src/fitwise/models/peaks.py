@@ -64,6 +64,7 @@ gaussian = Model(
         "cen": "peak position",
         "sigma": "standard deviation; FWHM = 2.3548 sigma",
     },
+    dims={"amp": (0, 1), "cen": (1, 0), "sigma": (1, 0)},
 )
 """Gaussian peak of height ``amp`` at ``cen`` with standard deviation ``sigma``."""
 
@@ -82,6 +83,7 @@ lorentzian = Model(
         "cen": "peak position",
         "gamma": "half width at half maximum; FWHM = 2 gamma",
     },
+    dims={"amp": (0, 1), "cen": (1, 0), "gamma": (1, 0)},
 )
 """Lorentzian peak of height ``amp`` at ``cen`` with half width ``gamma``."""
 
@@ -101,5 +103,6 @@ voigt = Model(
         "sigma": "standard deviation of the Gaussian part",
         "gamma": "half width at half maximum of the Lorentzian part",
     },
+    dims={"amp": (0, 1), "cen": (1, 0), "sigma": (1, 0), "gamma": (1, 0)},
 )
 """Voigt peak (Gaussian ⊗ Lorentzian) of height ``amp`` at ``cen``."""

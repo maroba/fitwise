@@ -25,6 +25,8 @@ from fitwise.backends.base import BackendResult, FitProblem
 
 _EPS_CBRT = float(np.finfo(float).eps ** (1 / 3))
 
+Loss = Literal["linear", "soft_l1", "huber", "cauchy", "arctan"]
+
 _DESCRIPTIONS = {
     "trf": "Trust Region Reflective (scipy least_squares)",
     "lm": "Levenberg-Marquardt (MINPACK via scipy)",
@@ -45,18 +47,30 @@ class LeastSquaresBackend:
         Maximum number of restarts from the current solution.
     max_nfev : int or None
         Evaluation limit per solver run; ``None`` uses scipy's default.
+    loss : str
+        ``"linear"`` (ordinary least squares) or a robust loss of
+        :func:`scipy.optimize.least_squares` (TRF only).
+    f_scale : float
+        Residual size (in units of the weighted residual) at which a robust loss starts to
+        downweight points.
     """
 
     method: Literal["trf", "lm"] = "trf"
     tol: float = 1e-15
     max_restarts: int = 10
     max_nfev: int | None = None
+    loss: Loss = "linear"
+    f_scale: float = 1.0
 
     def solve(self, problem: FitProblem) -> BackendResult:
         """Solve the problem, restarting until the cost stops improving."""
         names = problem.free_names
         if self.method == "lm" and problem.has_bounds:
             raise ValueError("Levenberg-Marquardt does not support bounds; use method='trf'")
+        if self.method == "lm" and self.loss != "linear":
+            raise ValueError("Levenberg-Marquardt does not support robust losses; use 'trf'")
+        robust = self.loss != "linear"
+        objective = "robust cost" if robust else "χ²"
         lo = np.array([problem.bounds[n][0] for n in names])
         hi = np.array([problem.bounds[n][1] for n in names])
         p = np.array([problem.init[n] for n in names])
@@ -89,21 +103,36 @@ class LeastSquaresBackend:
                     ftol=self.tol,
                     gtol=self.tol,
                     max_nfev=self.max_nfev,
+                    loss=self.loss,
+                    f_scale=self.f_scale,
                 )
             nfev += int(run.nfev)
             cost = 2 * float(run.cost)
             final_jac, final_scale = np.asarray(run.jac, dtype=float), scale
             if result is not None and not cost < best_cost * (1 - 1e-13):
-                log.append(f"restart {attempt}: no further improvement (χ² = {cost:.10g})")
+                log.append(f"restart {attempt}: no further improvement ({objective} = {cost:.10g})")
                 break
             label = "initial run" if attempt == 0 else f"restart {attempt}"
-            log.append(f"{label}: χ² = {cost:.10g}, {run.nfev} evals, status {run.status}")
+            log.append(f"{label}: {objective} = {cost:.10g}, {run.nfev} evals, status {run.status}")
             best_cost, result = cost, run
             p = np.clip(run.x * scale, lo, hi)
 
         assert result is not None
         assert final_jac is not None
         values = dict(zip(names, map(float, p), strict=True))
+        weights: FloatArray | None = None
+        if robust:
+            # scipy's Jacobian is modified by the loss; use the plain Jacobian with the robust
+            # weights instead, i.e. the covariance of the equivalent weighted least squares
+            def residual_final(u: FloatArray) -> FloatArray:
+                return problem.weighted_residual(dict(zip(names, u * final_scale, strict=True)))
+
+            u_final = p / final_scale
+            with np.errstate(all="ignore"):
+                jac = _central_jacobian(residual_final, u_final)
+                weights = rho_prime(self.loss, (residual_final(u_final) / self.f_scale) ** 2)
+            final_jac = jac * np.sqrt(weights)[:, None]
+            nfev += 2 * len(names) + 1
         cov_u = _covariance(final_jac)
         cov = None if cov_u is None else cov_u * np.outer(final_scale, final_scale)
         if cov is None:
@@ -117,7 +146,23 @@ class LeastSquaresBackend:
             method=_DESCRIPTIONS[self.method],
             raw=result,
             log=tuple(log),
+            robust_weights=weights,
         )
+
+
+def rho_prime(loss: str, z: FloatArray) -> FloatArray:
+    """Return the robust weights ρ′(z) of scipy's loss functions, ``z = (r / f_scale)²``."""
+    if loss == "linear":
+        return np.ones_like(z)
+    if loss == "soft_l1":
+        return np.asarray(1 / np.sqrt(1 + z), dtype=float)
+    if loss == "huber":
+        return np.where(z <= 1, 1.0, 1 / np.sqrt(np.maximum(z, 1)))
+    if loss == "cauchy":
+        return np.asarray(1 / (1 + z), dtype=float)
+    if loss == "arctan":
+        return np.asarray(1 / (1 + z**2), dtype=float)
+    raise ValueError(f"unknown loss {loss!r}")
 
 
 def _central_jacobian(fun: Callable[[FloatArray], FloatArray], u: FloatArray) -> FloatArray:

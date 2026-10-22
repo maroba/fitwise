@@ -77,6 +77,13 @@ def plot_result(
         x, y, yerr=yerr, fmt="o", ms=3, lw=1, capsize=0, color="C0", label="data", zorder=2
     )
 
+    out = result.downweighted
+    if out.any():
+        main.plot(
+            x[out], y[out], "o", ms=7, mfc="none", mec="C3", mew=1.2, zorder=4,
+            label=f"downweighted ({result.loss})",
+        )  # fmt: skip
+
     xs = np.linspace(float(np.min(x)), float(np.max(x)), n_points)
     label = "fit"
     if show_params:
@@ -95,6 +102,8 @@ def plot_result(
         r = result.normalized_residuals
         res_ax.axhline(0, color="0.5", lw=0.8)
         res_ax.plot(x, r, "o", ms=3, color="C0")
+        if out.any():
+            res_ax.plot(x[out], r[out], "o", ms=7, mfc="none", mec="C3", mew=1.2)
         res_ax.set_ylabel("(y − f)/σ" if yerr is not None else "y − f")
         res_ax.set_xlabel("x")
     else:

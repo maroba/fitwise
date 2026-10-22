@@ -257,7 +257,7 @@ Details, Arbeitspakete und Aufwände stehen in [`PLAN.md`](PLAN.md).
 | Frage | Entscheidung | Begründung |
 |---|---|---|
 | Lizenz | **BSD-3-Clause** | Gleich wie lmfit, scipy, numpy; keine Reibung im Ökosystem |
-| String-Modelle | **v0.2**, über `asteval` (kommt mit lmfit) | Keine neue Pflichtabhängigkeit; sympy nur optional für Ableitungen |
+| String-Modelle | **v0.2**, eigener Parser auf Basis von `ast` mit Allowlist (statt `asteval`) | Keine Abhängigkeit, sicher (keine Attribute, Importe, Builtins), schneller (einmal kompiliert); `^` als Potenz wie in Origin |
 | Komposition `+` | **v0.1** | Wird für reale Spektren sofort gebraucht (Peak + Untergrund) |
 | Nichtlinearer Solver | **`scipy.optimize.least_squares`** direkt statt lmfit-Minimizer | Nur so 27/27 NIST-Datensätze von beiden Startpunkten (ADR 5); lmfit bleibt für `conf_interval` und `asteval` |
 | ODR-Implementierung | **`odrpack`** statt `scipy.odr` | `scipy.odr` ist deprecated; ODRPACK95 unterstützt Bounds |

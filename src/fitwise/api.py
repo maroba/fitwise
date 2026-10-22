@@ -19,8 +19,10 @@ from fitwise._validate import (
     validate_data,
 )
 from fitwise.backends import Backend, FitProblem, LeastSquaresBackend, LinearBackend
+from fitwise.backends.least_squares import Loss
 from fitwise.backends.linear import is_linear
 from fitwise.backends.multistart import MultiStartBackend
+from fitwise.backends.robust import ROBUST_LOSSES, RobustBackend
 from fitwise.model import Model, as_model
 from fitwise.result import FitResult, build_result
 
@@ -43,7 +45,8 @@ def fit(
     p0: Mapping[str, float] | None = None,
     bounds: Mapping[str, tuple[float | None, float | None]] | None = None,
     fixed: Mapping[str, float] | None = None,
-    loss: str = "linear",
+    loss: Loss = "linear",
+    loss_scale: float | None = None,
     method: Method = "auto",
     scale_covar: bool | None = None,
     nan_policy: NanPolicy = "raise",
@@ -71,8 +74,14 @@ def fit(
         ``{name: (lo, hi)}``; use ``None`` for an open side.
     fixed : dict, optional
         ``{name: value}`` of parameters held constant.
-    loss : str
-        Only ``"linear"`` (ordinary least squares) is supported so far.
+    loss : {"linear", "soft_l1", "huber", "cauchy", "arctan"}
+        ``"linear"`` is ordinary least squares. The robust losses downweight outliers: the fit
+        first runs ordinarily, then minimizes the robust loss from that solution.
+        ``"soft_l1"`` and ``"huber"`` are mild, ``"cauchy"`` and ``"arctan"`` strong.
+    loss_scale : float, optional
+        Residual size at which a robust loss starts to downweight points, in units of
+        ``yerr``. Default: 1.5 with ``yerr``; without ``yerr``, 1.5 times a robust estimate of
+        the scatter (MAD) of an ordinary fit.
     method : {"auto", "linear", "trf", "lm", "multistart"}
         Solver. ``"auto"`` solves models that are linear in their parameters directly (no
         starting values needed) and uses Trust Region Reflective otherwise; parameters without
@@ -103,8 +112,12 @@ def fit(
         raise NotImplementedError(
             "xerr (orthogonal distance regression) is planned for fitwise 0.3"
         )
-    if loss != "linear":
-        raise NotImplementedError("robust loss functions are planned for fitwise 0.2")
+    if loss != "linear" and loss not in ROBUST_LOSSES:
+        raise ValueError(f"unknown loss {loss!r}; choose 'linear' or one of {ROBUST_LOSSES}")
+    if loss_scale is not None and not (math.isfinite(loss_scale) and loss_scale > 0):
+        raise ValueError(f"loss_scale must be positive, got {loss_scale!r}")
+    if loss != "linear" and method == "lm":
+        raise ValueError("method='lm' does not support robust losses; use 'auto' or 'trf'")
     data = validate_data(x, y, yerr, nan_policy)
 
     names = m.param_names
@@ -139,6 +152,9 @@ def fit(
         strategies.update(dict.fromkeys(problem.free_names, "not needed (linear model)"))
     elif isinstance(backend, MultiStartBackend):
         strategies.update(dict.fromkeys(backend.sample, "multi-start"))
+    if loss != "linear":
+        backend = RobustBackend(backend, loss, loss_scale)
+        reason += f", robust ({loss})"
     solved = backend.solve(problem)
     result = build_result(
         problem,
@@ -154,6 +170,7 @@ def fit(
             "scale_covar": scale_covar,
             "nan_policy": nan_policy,
             "loss": loss,
+            "loss_scale": loss_scale,
         },
     )
     for w in result.warnings:

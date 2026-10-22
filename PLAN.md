@@ -134,6 +134,8 @@ Abweichungen vom Plan:
 
 **Stand 2.3–2.6, 2.9 (2026-10-22): erledigt, mit Abweichung (ADR 7).** Die Benchmarksuite (2.9, 32 Modelle) wurde zuerst gebaut. Multi-Start mit Variable Projection und datenbasierten Kandidaten (2.5, 2.6) erreicht 99.7 % von 3300 Fits; die Rollenanalyse (2.3, 2.4) wurde deshalb nicht implementiert. DoD v0.2: Benchmark ≥ 85 % ✅ (99.7 %); NIST ohne Startwerte: hoch 8/8 ✅, niedrig 7/8 und mittel 10/11 ❌ (Gauss2, Gauss3: zwei stark überlappende Peaks plus Zerfall als eine Black-Box-Funktion; mit eingebauten Modellen lösbar). `guess_strategy` für jeden Parameter gesetzt ✅.
 
+**Stand 2.7, 2.8 (2026-10-22): erledigt.** String-Modelle mit eigenem `ast`-Parser statt `asteval` (sicherer, schneller, keine Abhängigkeit); `^` als Potenz, Ersetzung vor dem Parsen wegen der Operator-Priorität. Robuste Fits zweistufig (gewöhnlicher Fit, dann TRF mit Loss); Kovarianz der äquivalenten gewichteten Kleinste-Quadrate, Skala ohne `yerr` über 1.4826 · MAD. Kalibrierung per Monte Carlo: Pull-Streuung 0.95–1.09 mit `yerr`, 0.96–1.17 ohne.
+
 **Entscheidungspunkt nach 2.3:** Liefert die Rollenanalyse auf der Benchmarksuite weniger als 60 % korrekte Klassifikationen, wird sie auf Offset/Amplitude reduziert und der Rest über Multi-Start gelöst. Die Abweichung wird in der Vision dokumentiert.
 
 ---

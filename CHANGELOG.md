@@ -14,6 +14,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - User functions without starting values: multi-start with variable projection (99.7 % on a
   benchmark of 32 lab models). `method="multistart"` forces it for all parameters.
 - Benchmark catalog of 32 realistic models in the tests.
+- Models as text: `fw.fit("a*exp(-x/tau) + c", x, y)`, validated against an allowlist;
+  `^` means power. `fw.ExpressionModel` for other variable names.
+- Robust fits against outliers: `loss="soft_l1" | "huber" | "cauchy" | "arctan"` with
+  `loss_scale`; downweighted points are reported, marked in the plot and available as
+  `result.downweighted`.
 
 ### Changed
 

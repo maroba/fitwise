@@ -135,4 +135,11 @@ def to_dict(result: FitResult, *, include_data: bool = False) -> dict[str, Any]:
             "bic": _float(result.bic),
         },
         "warnings": [{"type": type(w).__name__, "message": str(w)} for w in result.warnings],
+        "robust": None
+        if result.robust_weights is None
+        else {
+            "loss": result.loss,
+            "n_downweighted": int(result.downweighted.sum()),
+            **({"weights": result.robust_weights.tolist()} if include_data else {}),
+        },
     }

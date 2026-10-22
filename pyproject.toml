@@ -13,7 +13,7 @@ license-files = ["LICENSE"]
 authors = [{ name = "Matthias Baer", email = "matthias.r.baer@googlemail.com" }]
 keywords = ["curve fitting", "least squares", "regression", "lmfit", "uncertainty", "data analysis"]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Education",
     "Operating System :: OS Independent",
@@ -42,6 +42,7 @@ all = ["fitwise[plot,odr,units,symbolic,batch]"]
 
 [project.urls]
 Homepage = "https://github.com/maroba/fitwise"
+Documentation = "https://maroba.github.io/fitwise/"
 Repository = "https://github.com/maroba/fitwise"
 Issues = "https://github.com/maroba/fitwise/issues"
 Changelog = "https://github.com/maroba/fitwise/blob/main/CHANGELOG.md"

@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-22
+
+First public release.
+
 ### Added
 
 - `fitwise.fit()` with `yerr`, `p0`, `bounds`, `fixed`, `scale_covar` and `nan_policy`.
@@ -19,9 +23,5 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - Text report, `plot()` with residual panel, `to_dict()` for JSON export.
 - Documentation: quickstart, guides on models and uncertainties, 10 gallery examples.
 
-## [0.0.1] - unreleased
-
-Placeholder release to reserve the package name on PyPI.
-
-[Unreleased]: https://github.com/maroba/fitwise/compare/v0.0.1...HEAD
-[0.0.1]: https://github.com/maroba/fitwise/releases/tag/v0.0.1
+[Unreleased]: https://github.com/maroba/fitwise/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/maroba/fitwise/releases/tag/v0.1.0

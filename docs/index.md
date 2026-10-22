@@ -3,7 +3,7 @@
 **One call. One fit. One report you can trust.**
 
 :::{warning}
-fitwise is in **pre-alpha**. The API may still change before v0.1.
+fitwise is in **alpha**. The API may still change before 1.0.
 :::
 
 `fitwise` is an ergonomic layer over [lmfit](https://lmfit.github.io/lmfit-py/) and

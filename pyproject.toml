@@ -56,6 +56,7 @@ lint = [
     "ruff>=0.14",
     "mypy>=1.18",
     "pre-commit>=4.0",
+    "scipy-stubs>=1.17.1.5",
 ]
 docs = [
     "sphinx>=8.0",
@@ -119,6 +120,7 @@ convention = "numpy"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["D"]
+"conftest.py" = ["D"]
 "docs/**" = ["D"]
 
 # --- mypy ---------------------------------------------------------------
@@ -136,10 +138,16 @@ ignore_missing_imports = true
 # --- pytest -------------------------------------------------------------
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "--strict-markers --strict-config -ra"
+testpaths = ["tests", "src"]
+addopts = "--strict-markers --strict-config -ra --doctest-modules"
 xfail_strict = true
-filterwarnings = ["error"]
+filterwarnings = [
+    "error",
+    # deprecations in third-party packages must not break the suite, ours must
+    "default::DeprecationWarning",
+    "default::PendingDeprecationWarning",
+    "error::DeprecationWarning:fitwise",
+]
 markers = [
     "slow: long-running tests (deselect with '-m \"not slow\"')",
     "nist: NIST StRD nonlinear regression reference tests",

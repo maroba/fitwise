@@ -90,14 +90,8 @@ Das ist das Alleinstellungsmerkmal und der schwierigste Teil. Die Strategie ist 
 
 1. **Explizit:** `p0` oder Default-Werte aus der Funktionssignatur.
 2. **Eingebautes Modell:** modellspezifische `guess()`-Heuristik (Peak-Position, FWHM, Abfallzeit …).
-3. **Strukturerkennung bei freien Funktionen:** Zuerst wird eine *Rollenanalyse* durchgeführt. An einem Referenzpunkt wird jeder Parameter gestört, und es wird klassifiziert, wie er wirkt:
-   - additiver Offset (Ableitung ≈ konstant in x) → aus Median/Rand der Daten
-   - Amplitude (Modell skaliert ≈ proportional) → aus Spannweite der Daten
-   - x-Verschiebung (Ableitung ∝ dy/dx) → aus Lage des Extremums/Wendepunkts
-   - x-Skala (Ableitung ∝ x·dy/dx) → aus FWHM, Abfallzeit, Datenbereich
-   - sonstige → Multi-Start
-4. **Linearisierung**, wo möglich: Log-Transformation für Exponential- und Potenzgesetz-Strukturen, lineare Teilprobleme direkt lösen (Variable Projection für Parameter, die linear eingehen).
-5. **Multi-Start** mit Latin-Hypercube-Sampling als Fallback, begrenzt durch `max_starts` (Standard 50).
+3. **Variable Projection:** Parameter, in denen das Modell (bei festen übrigen) linear ist, etwa Amplituden und Offsets, werden immer exakt berechnet.
+4. **Multi-Start** für die übrigen Parameter ohne Startwert: 400 Kandidaten aus datenangepassten Bereichen (Lage und Breite von Strukturen, dominante Frequenz, viele Größenordnungen beider Vorzeichen), die besten 5 werden verfeinert. Ergebnis: 99.7 % auf einem Benchmark von 32 realen Laborfunktionen (ADR 7). Die ursprünglich geplante Rollenanalyse war dafür nicht nötig.
 
 Jede Entscheidung ist transparent: `result.initial_guess`, `result.guess_strategy` (pro Parameter) und `result.solver_log` sind einsehbar und erscheinen im Report.
 

@@ -20,6 +20,7 @@ from fitwise._validate import (
 )
 from fitwise.backends import Backend, FitProblem, LeastSquaresBackend, LinearBackend
 from fitwise.backends.linear import is_linear
+from fitwise.backends.multistart import MultiStartBackend
 from fitwise.model import Model, as_model
 from fitwise.result import FitResult, build_result
 
@@ -28,7 +29,6 @@ __all__ = ["fit"]
 Method = Literal["auto", "trf", "lm", "linear", "odr", "multistart"]
 
 _PLANNED = {
-    "multistart": "0.2",
     "odr": "0.3",
 }
 
@@ -72,10 +72,11 @@ def fit(
         ``{name: value}`` of parameters held constant.
     loss : str
         Only ``"linear"`` (ordinary least squares) is supported so far.
-    method : {"auto", "linear", "trf", "lm"}
+    method : {"auto", "linear", "trf", "lm", "multistart"}
         Solver. ``"auto"`` solves models that are linear in their parameters directly (no
-        starting values needed) and uses Trust Region Reflective otherwise. ``"lm"`` is
-        Levenberg–Marquardt without bounds.
+        starting values needed) and uses Trust Region Reflective otherwise; parameters without
+        any starting value are then found by a multi-start. ``"lm"`` is Levenberg–Marquardt
+        without bounds; ``"multistart"`` samples all free parameters.
     scale_covar : bool, optional
         Multiply the covariance by χ²/ndf. Default: ``False`` with ``yerr`` (uncertainties are
         taken as absolute), ``True`` without.
@@ -129,11 +130,14 @@ def fit(
     init, strategies = _initial_values(m, data, free, p0_given, free_bounds)
     strategies.update(dict.fromkeys(fixed_values, "fixed"))
     problem = FitProblem(m, data, init, fixed_values, free_bounds)
-    _check_start(problem, strategies)
-
-    backend, reason = _select_backend(method, problem)
+    without_start = [n for n in problem.free_names if strategies[n].startswith("fallback")]
+    backend, reason = _select_backend(method, problem, without_start)
+    # a multi-start does not depend on the fallback values being valid
+    _check_start(problem, strategies, finite=not isinstance(backend, MultiStartBackend))
     if isinstance(backend, LinearBackend):
         strategies.update(dict.fromkeys(problem.free_names, "not needed (linear model)"))
+    elif isinstance(backend, MultiStartBackend):
+        strategies.update(dict.fromkeys(backend.sample, "multi-start"))
     solved = backend.solve(problem)
     result = build_result(
         problem,
@@ -199,7 +203,7 @@ def _fallback(lo: float, hi: float) -> float:
     return 1.0
 
 
-def _check_start(problem: FitProblem, strategies: Mapping[str, str]) -> None:
+def _check_start(problem: FitProblem, strategies: Mapping[str, str], *, finite: bool) -> None:
     """Fail early with a clear message if the model cannot be evaluated at the start."""
     n = problem.data.n
     start = problem.all_params(problem.init)
@@ -211,7 +215,7 @@ def _check_start(problem: FitProblem, strategies: Mapping[str, str]) -> None:
         raise ValueError(
             f"the model returned an array of shape {np.shape(model_y)}, expected ({n},)"
         ) from None
-    if not np.all(np.isfinite(model_y)):
+    if finite and not np.all(np.isfinite(model_y)):
         values = ", ".join(f"{k} = {v:g} ({strategies[k]})" for k, v in start.items())
         raise ValueError(
             f"the model is not finite at the starting values {values}. "
@@ -219,10 +223,14 @@ def _check_start(problem: FitProblem, strategies: Mapping[str, str]) -> None:
         )
 
 
-def _select_backend(method: str, problem: FitProblem) -> tuple[Backend, str]:
+def _select_backend(
+    method: str, problem: FitProblem, without_start: list[str]
+) -> tuple[Backend, str]:
     if method == "auto":
         if is_linear(problem):
             return LinearBackend(), "auto: linear in the parameters"
+        if without_start:
+            return MultiStartBackend(without_start), "auto: nonlinear, no starting values"
         return LeastSquaresBackend("trf"), "auto: nonlinear"
     if method == "linear":
         if not is_linear(problem):
@@ -230,10 +238,14 @@ def _select_backend(method: str, problem: FitProblem) -> tuple[Backend, str]:
         return LinearBackend(), "requested"
     if method == "trf":
         return LeastSquaresBackend("trf"), "requested"
+    if method == "multistart":
+        return MultiStartBackend(problem.free_names), "requested"
     if method == "lm":
         if problem.has_bounds:
             raise ValueError("method='lm' does not support bounds; use 'trf' or 'auto'")
         return LeastSquaresBackend("lm"), "requested"
     if method in _PLANNED:
         raise NotImplementedError(f"method={method!r} is planned for fitwise {_PLANNED[method]}")
-    raise ValueError(f"unknown method {method!r}; choose 'auto', 'linear', 'trf' or 'lm'")
+    raise ValueError(
+        f"unknown method {method!r}; choose 'auto', 'linear', 'trf', 'lm' or 'multistart'"
+    )

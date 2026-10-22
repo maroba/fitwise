@@ -64,8 +64,12 @@ class LeastSquaresBackend:
         log: list[str] = []
         best_cost = np.inf
         result: OptimizeResult | None = None
-        best_scale = _scale(p)
         nfev = 0
+        # The covariance uses the Jacobian of the *last* run: it started at the best point with
+        # a normalization that matches that point. The first run's Jacobian is scaled by the
+        # starting values, which can be off by many orders of magnitude.
+        final_jac: FloatArray | None = None
+        final_scale = _scale(p)
         for attempt in range(self.max_restarts + 1):
             scale = _scale(p)
 
@@ -88,18 +92,20 @@ class LeastSquaresBackend:
                 )
             nfev += int(run.nfev)
             cost = 2 * float(run.cost)
+            final_jac, final_scale = np.asarray(run.jac, dtype=float), scale
             if result is not None and not cost < best_cost * (1 - 1e-13):
                 log.append(f"restart {attempt}: no further improvement (χ² = {cost:.10g})")
                 break
             label = "initial run" if attempt == 0 else f"restart {attempt}"
             log.append(f"{label}: χ² = {cost:.10g}, {run.nfev} evals, status {run.status}")
-            best_cost, result, best_scale = cost, run, scale
+            best_cost, result = cost, run
             p = np.clip(run.x * scale, lo, hi)
 
         assert result is not None
+        assert final_jac is not None
         values = dict(zip(names, map(float, p), strict=True))
-        cov_u = _covariance(np.asarray(result.jac, dtype=float))
-        cov = None if cov_u is None else cov_u * np.outer(best_scale, best_scale)
+        cov_u = _covariance(final_jac)
+        cov = None if cov_u is None else cov_u * np.outer(final_scale, final_scale)
         if cov is None:
             log.append("Jacobian is rank deficient; covariance not available")
         return BackendResult(

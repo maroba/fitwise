@@ -76,12 +76,29 @@ For each parameter, the first applicable rule wins, and the report shows which o
 2. a default value in the function signature
 3. the heuristic of a built-in model (peak position and width, log-linear fit of a decay,
    periodogram of an oscillation, …)
-4. a fallback: the middle of the bounds, or 1
+4. a multi-start for everything that is still missing (see below)
 
 Sums of built-in models are estimated step by step: first the background from the flat edges
 of the data, then each peak or decay on what remains.
 
-All built-in models and the common combinations converge without any starting values in the
-test suite (100 random problems each). For your own functions without defaults, give `p0` or
-defaults of the right magnitude. Automatic starting values for arbitrary functions are planned
-for version 0.2.
+### Your own functions without starting values
+
+You do not have to give starting values for your own functions. fitwise then finds them like
+this:
+
+- Parameters the model is linear in, such as amplitudes and offsets, are always computed
+  exactly.
+- For the others, 400 candidates are drawn from ranges adapted to the data: positions and
+  widths of features, frequencies, and many orders of magnitude of both signs. The best 5 are
+  refined.
+
+The report shows `multi-start` for these parameters.
+
+On a benchmark of 32 realistic lab models (decays, peaks, sigmoids, Arrhenius, Shockley diode,
+Planck, Hill, Morse, …) with random parameters, this reaches the global minimum in 99.7 % of
+3300 fits. It costs about 60 ms per fit instead of 10 ms.
+
+Where it can fail: several strongly overlapping features in one function, with many nonlinear
+parameters, for example two overlapping peaks on a decay. Build such models from built-in
+components (`fw.models.exponential + fw.models.gaussian + fw.models.gaussian`), which are guessed
+one by one, or give `p0` for the positions.

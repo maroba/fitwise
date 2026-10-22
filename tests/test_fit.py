@@ -147,10 +147,16 @@ class TestStartingValues:
     def test_fallback_and_bounds(self):
         m = fw.Model(lambda x, a, b: a * np.exp(-b * x))
         x = np.linspace(0, 3, 20)
-        r = fw.fit(m, x, 1.5 * np.exp(-0.7 * x), bounds={"a": (0, 4), "b": (0, None)})
+        y = 1.5 * np.exp(-0.7 * x)
+        bounds = {"a": (0, 4), "b": (0, None)}
+        r = fw.fit(m, x, y, bounds=bounds, method="trf")
         assert r.initial_guess == {"a": 2.0, "b": 1.0}
         assert r.guess_strategy == {"a": "fallback", "b": "fallback"}
         assert r.params["a"].value == pytest.approx(1.5)
+        auto = fw.fit(m, x, y, bounds=bounds)
+        assert auto.method_reason == "auto: nonlinear, no starting values"
+        assert auto.guess_strategy == {"a": "multi-start", "b": "multi-start"}
+        assert auto.params["b"].value == pytest.approx(0.7)
         assert "(0, 4)" in str(r)
 
     def test_fallback_upper_bound_only(self):
@@ -249,15 +255,22 @@ class TestInputValidation:
 
     def test_non_finite_start(self):
         with pytest.raises(ValueError, match="not finite at the starting values"):
-            fw.fit(lambda x, a: np.log(a - 2) * x, np.arange(1, 5.0), np.arange(1, 5.0))
+            fw.fit(
+                lambda x, a: np.log(a - 2) * x, np.arange(1, 5.0), np.arange(1, 5.0), method="trf"
+            )
+
+    def test_multi_start_does_not_need_a_valid_fallback(self):
+        x = np.arange(1, 5.0)
+        r = fw.fit(lambda x, a: np.log(a - 2) * x, x, np.log(5.0) * x + 0.01 * np.sin(x))
+        assert r.params["a"].value == pytest.approx(7.0, rel=1e-2)
 
     def test_planned_features(self):
         with pytest.raises(NotImplementedError, match=r"0\.3"):
             fw.fit(linear, [0, 1, 2], [0, 1, 2], xerr=0.1)
         with pytest.raises(NotImplementedError, match=r"0\.2"):
             fw.fit(linear, [0, 1, 2], [0, 1, 2], loss="huber")
-        with pytest.raises(NotImplementedError, match=r"0\.2"):
-            fw.fit(linear, [0, 1, 2], [0, 1, 2], method="multistart")
+        with pytest.raises(NotImplementedError, match=r"0\.3"):
+            fw.fit(linear, [0, 1, 2], [0, 1, 2], method="odr")
         with pytest.raises(ValueError, match="unknown method"):
             fw.fit(linear, [0, 1, 2], [0, 1, 2], method="newton")  # type: ignore[arg-type]
 

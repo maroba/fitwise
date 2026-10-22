@@ -1,0 +1,2 @@
+# NIST reference files are vendored byte-for-byte (CRLF line endings).
+tests/data/nist/*.dat -text

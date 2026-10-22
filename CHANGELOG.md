@@ -6,6 +6,17 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Linear models are detected automatically and solved directly, without starting values;
+  bounds use `scipy.optimize.lsq_linear`. `method="linear"` requests this explicitly.
+- NIST StRD linear regression suite (11 datasets) in the tests.
+
+### Changed
+
+- `method="auto"` reports why it chose a solver: `auto: linear in the parameters` or
+  `auto: nonlinear`.
+
 ## [0.1.0] - 2026-10-22
 
 First public release.

@@ -145,12 +145,12 @@ class TestStartingValues:
         assert r.guess_strategy == {"amp": "model heuristic", "tau": "signature default", "k": "p0"}
 
     def test_fallback_and_bounds(self):
-        m = fw.Model(lambda x, a, b: a * x + b)
-        x = np.linspace(0, 1, 10)
-        r = fw.fit(m, x, 2 * x + 1, bounds={"a": (0, 4), "b": (0, None)})
+        m = fw.Model(lambda x, a, b: a * np.exp(-b * x))
+        x = np.linspace(0, 3, 20)
+        r = fw.fit(m, x, 1.5 * np.exp(-0.7 * x), bounds={"a": (0, 4), "b": (0, None)})
         assert r.initial_guess == {"a": 2.0, "b": 1.0}
         assert r.guess_strategy == {"a": "fallback", "b": "fallback"}
-        assert r.params["a"].value == pytest.approx(2)
+        assert r.params["a"].value == pytest.approx(1.5)
         assert "(0, 4)" in str(r)
 
     def test_fallback_upper_bound_only(self):
@@ -257,7 +257,7 @@ class TestInputValidation:
         with pytest.raises(NotImplementedError, match=r"0\.2"):
             fw.fit(linear, [0, 1, 2], [0, 1, 2], loss="huber")
         with pytest.raises(NotImplementedError, match=r"0\.2"):
-            fw.fit(linear, [0, 1, 2], [0, 1, 2], method="linear")
+            fw.fit(linear, [0, 1, 2], [0, 1, 2], method="multistart")
         with pytest.raises(ValueError, match="unknown method"):
             fw.fit(linear, [0, 1, 2], [0, 1, 2], method="newton")  # type: ignore[arg-type]
 

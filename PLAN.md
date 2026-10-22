@@ -119,6 +119,7 @@ Abweichungen vom Plan:
 |---|---|---|---|
 | 2.1 | Linearitätserkennung | Numerischer Jacobi-Test an 3 Zufallspunkten, Toleranz relativ zur Skalennorm; Caching pro Modell | 1.5 |
 | 2.2 | Linear-Backend | `lstsq` mit Gewichtung, `lsq_linear` bei Bounds, Fixierung durch Spaltenelimination, exakte Kovarianz | 1.5 |
+
 | 2.3 | Rollenanalyse | Störung jedes Parameters an einem Referenzpunkt; Klassifikation (Offset, Amplitude, x-Shift, x-Skala, sonstige) per Korrelation der Ableitung mit Templates; Konfidenzwert | 3 |
 | 2.4 | Schätzer pro Rolle | Offset/Amplitude/Shift/Skala aus Datenstatistik (Median, Spannweite, Extremum, FWHM, Wendepunkt) | 2 |
 | 2.5 | Linearisierung + Variable Projection | Log-Transformation für exp/power; lineare Parameter bei gegebenen nichtlinearen exakt lösen | 2 |
@@ -126,6 +127,8 @@ Abweichungen vom Plan:
 | 2.7 | String-Modelle | `"a*exp(-x/tau) + c"` über asteval, Parametererkennung, Whitelist erlaubter Funktionen, optional sympy-Ableitungen | 1.5 |
 | 2.8 | Robuste Losses | `loss=` über `least_squares`; Hinweis im Report, dass die Kovarianz dann approximativ ist | 1 |
 | 2.9 | Benchmarksuite „freie Funktionen“ | 30+ reale Modelle aus Literatur/Praktika als Testkatalog; Messung der Konvergenzrate ohne `p0` | 1 |
+
+**Stand 2.1/2.2 (2026-10-22): erledigt.** Prüfung zusätzlich gegen die NIST-StRD-Linear-Suite (11 Datensätze, ADR 6): Filip 7.4 Stellen, alle anderen ≥ 7.7 außer Wampler5 (5.7 Stellen bei Standardfehlern von 10³–10⁷ × Wert).
 
 **DoD v0.2:** NIST StRD ohne Startwerte: 100 % niedrige/mittlere, ≥ 80 % höhere Schwierigkeit; Konvergenzrate der Benchmarksuite ≥ 85 %; `result.guess_strategy` für jeden Parameter gesetzt und im Report sichtbar.
 

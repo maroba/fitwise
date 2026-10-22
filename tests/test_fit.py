@@ -264,11 +264,7 @@ class TestInputValidation:
         r = fw.fit(lambda x, a: np.log(a - 2) * x, x, np.log(5.0) * x + 0.01 * np.sin(x))
         assert r.params["a"].value == pytest.approx(7.0, rel=1e-2)
 
-    def test_planned_features(self):
-        with pytest.raises(NotImplementedError, match=r"0\.3"):
-            fw.fit(linear, [0, 1, 2], [0, 1, 2], xerr=0.1)
-        with pytest.raises(NotImplementedError, match=r"0\.3"):
-            fw.fit(linear, [0, 1, 2], [0, 1, 2], method="odr")
+    def test_unknown_method(self):
         with pytest.raises(ValueError, match="unknown method"):
             fw.fit(linear, [0, 1, 2], [0, 1, 2], method="newton")  # type: ignore[arg-type]
 

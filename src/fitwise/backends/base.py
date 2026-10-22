@@ -95,6 +95,8 @@ class BackendResult:
     log: tuple[str, ...] = field(default_factory=tuple)
     robust_weights: FloatArray | None = None
     """Weights ρ′(z) of a robust fit at the solution (1 = normal point, ≪ 1 = outlier)."""
+    chi2: float | None = None
+    """χ² of the backend's own objective if it is not Σ((y − f(x))/yerr)², e.g. for ODR."""
 
 
 class Backend(Protocol):

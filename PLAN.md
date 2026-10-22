@@ -77,7 +77,7 @@ Fehlschläge von Start 1: Lanczos3, Kirby2, Hahn1, BoxBOD, Bennett5. Das v0.1-Zi
 
 ### Stand (2026-10-22)
 
-Erledigt: 1.1–1.11 (Branch `feat/mvp-core`). Offen: 1.12 (Doku und Galerie-Beispiele).
+Erledigt: 1.1–1.12. Offen: Release 0.1.0 (wartet auf die PyPI-Einrichtung, 0.7) und Testnutzer:innen.
 
 Abweichungen vom Plan:
 
@@ -92,6 +92,11 @@ Abweichungen vom Plan:
   100/100 zufälligen Fällen (`tests/test_models.py`, Ziel war ≥ 99 %).
 - **`from_dict()`** entfällt vorerst. Eine Python-Funktion lässt sich nicht aus JSON
   rekonstruieren; `to_dict()` enthält alles, um den Fit mit demselben Modell zu wiederholen.
+- **Korrelationswarnung:** Schwelle 0.999 statt 0.95. Die Beispiele zeigten, dass
+  Korrelationen von 0.95–0.999 bei Arrhenius, Potenzgesetzen und Geraden fern von x = 0 normal
+  sind; eine Warnung dort wäre Rauschen. Korrelationen > 0.5 stehen weiter im Report.
+- **Kalibrierung geprüft:** Pulls (Fit − Wahrheit)/σ im Zerfallsbeispiel über 300 Seeds:
+  Mittelwert −0.06, Standardabweichung 1.03.
 - **Kompatibilität:** Bei scipy 1.12 ignoriert `least_squares(method="lm")` den 3-Punkt-Jacobi
   stillschweigend; fitwise berechnet ihn für LM deshalb selbst.
 
@@ -100,7 +105,7 @@ Abweichungen vom Plan:
 - [x] Die drei Zeilen aus Vision §2 laufen und liefern Report und Plot
 - [x] NIST StRD von Startpunkt 1: 27/27 (auch von Startpunkt 2)
 - [x] Coverage ≥ 90 %, `mypy --strict` grün (98 %)
-- [ ] Doku online mit Quickstart und 10 Beispielen
+- [x] Doku mit Quickstart und 10 Beispielen (online nach Merge)
 - [ ] Release `0.1.0` auf PyPI; Ankündigung an 5–10 Testnutzer:innen mit Feedback-Formular
 
 ---

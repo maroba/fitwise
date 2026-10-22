@@ -23,8 +23,10 @@ if TYPE_CHECKING:
 
 __all__ = ["FitResult"]
 
-#: Correlation above which a StrongCorrelationWarning is raised.
-STRONG_CORRELATION = 0.95
+#: Correlation above which a StrongCorrelationWarning is raised. Correlations of 0.95-0.99 are
+#: normal for many physical laws (Arrhenius, power laws, lines far from x = 0) and are listed in
+#: the report instead; above 0.999 only a combination of the parameters is determined.
+STRONG_CORRELATION = 0.999
 #: Two-sided probability outside of which χ² is considered implausible.
 CHI2_ALPHA = 0.01
 
@@ -309,10 +311,12 @@ def _with_warnings(result: FitResult) -> FitResult:
             )
     strong = result.correlations(STRONG_CORRELATION)
     if strong:
-        pairs = ", ".join(f"{a}–{b} ({r:+.3f})" for (a, b), r in strong.items())
+        pairs = ", ".join(f"{a}–{b} ({r:+.4f})" for (a, b), r in strong.items())
         found.append(
             fw_warnings.StrongCorrelationWarning(
-                f"strongly correlated parameters: {pairs}; consider fixing or removing one"
+                f"almost fully correlated parameters: {pairs}; the data determine only a "
+                "combination of them. Use the covariance when combining them, or reparametrize "
+                "(e.g. measure x relative to the center of the data)"
             )
         )
     large = [p for p in result.params.values() if p.stderr is not None and p.stderr > abs(p.value)]

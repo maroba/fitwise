@@ -37,7 +37,11 @@ class PoorChiSquareWarning(FitWarning):
 
 
 class StrongCorrelationWarning(FitWarning):
-    """Two parameters are almost fully correlated; the model may be over-parametrized."""
+    """Two parameters are almost fully correlated (absolute correlation above 0.999).
+
+    The data then determine only a combination of the two. Their individual uncertainties are
+    correct but large; combine them using the covariance, or reparametrize the model.
+    """
 
 
 class LargeUncertaintyWarning(FitWarning):

@@ -22,12 +22,12 @@ Puffer: ca. 20 % sind in den Kalenderwochen enthalten, nicht in den PT.
 | # | Aufgabe | Ergebnis | Status |
 |---|---|---|---|
 | 0.1 | Git-Repo, BSD-3-Lizenz, `README.md`, `CHANGELOG.md` | Lokales Repo | ✅ |
-| 0.1b | GitHub-Repo `maroba/fitwise` anlegen und pushen | Öffentliches Repo | offen |
+| 0.1b | GitHub-Repo `maroba/fitwise` anlegen und pushen, GitHub Pages aktivieren | Öffentliches Repo | ✅ |
 | 0.2 | `pyproject.toml` (hatchling), `src/`-Layout, Extras laut Vision §6, Python ≥ 3.11 | `uv sync --all-extras` funktioniert | ✅ |
 | 0.3 | Tooling: `uv`, `ruff` (Lint + Format), `mypy --strict` für `src/`, `pre-commit` | `pre-commit run -a` grün | ✅ |
 | 0.4 | Tests: `pytest`, `pytest-cov`, `hypothesis`; Marker `slow`, `nist`; Coverage-Ziel 90 % | Suite läuft | ✅ |
-| 0.5 | CI (GitHub Actions): Python 3.11–3.14 (neueste Abhängigkeiten) + 3.11 mit Mindestversionen; Lint, Typen, Tests; Release über Trusted Publishing | Workflows liegen in `.github/workflows/` | ✅ (aktiv nach 0.1b) |
-| 0.6 | Doku-Gerüst: Sphinx + pydata-Theme + MyST + `sphinx-gallery` (ADR 4); ADRs 1–4; Deployment auf GitHub Pages | `sphinx-build -W` grün | ✅ (online nach 0.1b) |
+| 0.5 | CI (GitHub Actions): Python 3.11–3.14 (neueste Abhängigkeiten) + 3.11 mit Mindestversionen; Lint, Typen, Tests; Release über Trusted Publishing | Workflows liegen in `.github/workflows/` | ✅ |
+| 0.6 | Doku-Gerüst: Sphinx + pydata-Theme + MyST + `sphinx-gallery` (ADR 4); ADRs 1–4; Deployment auf GitHub Pages | `sphinx-build -W` grün | ✅ |
 | 0.7 | Namen auf PyPI sichern: Trusted Publisher einrichten, Release `0.0.1` per Tag `v0.0.1` | Name reserviert | offen |
 | 0.8 | Testdaten: 27 NIST-StRD-Datensätze in `tests/data/nist/`, Loader `tests/nist_strd.py` mit Modellfunktionen; Prüfung: zertifizierte Werte reproduzieren die zertifizierte RSS (rel. 1e-8) | `tests/test_nist_fixtures.py` grün | ✅ |
 
@@ -182,6 +182,5 @@ Fehlschläge von Start 1: Lanczos3, Kirby2, Hahn1, BoxBOD, Bennett5. Das v0.1-Zi
 
 ## Nächste Schritte
 
-1. GitHub-Repo anlegen und pushen (0.1b). Danach laufen CI und Doku-Deployment.
-2. PyPI: Trusted Publisher für `maroba/fitwise` / `release.yml` / Environment `pypi` einrichten, dann Tag `v0.0.1` (0.7).
-3. Mit 1.1 (Kerntypen) beginnen: Das Backend-Protokoll ist die wichtigste Designentscheidung im Code und sollte vor allem anderen stehen.
+1. PyPI: Trusted Publisher für `maroba/fitwise` / `release.yml` / Environment `pypi` einrichten, dann Tag `v0.0.1` (0.7).
+2. Mit 1.1 (Kerntypen) beginnen: Das Backend-Protokoll ist die wichtigste Designentscheidung im Code und sollte vor allem anderen stehen.

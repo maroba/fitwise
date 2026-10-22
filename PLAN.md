@@ -28,7 +28,7 @@ Puffer: ca. 20 % sind in den Kalenderwochen enthalten, nicht in den PT.
 | 0.4 | Tests: `pytest`, `pytest-cov`, `hypothesis`; Marker `slow`, `nist`; Coverage-Ziel 90 % | Suite läuft | ✅ |
 | 0.5 | CI (GitHub Actions): Python 3.11–3.14 (neueste Abhängigkeiten) + 3.11 mit Mindestversionen; Lint, Typen, Tests; Release über Trusted Publishing | Workflows liegen in `.github/workflows/` | ✅ |
 | 0.6 | Doku-Gerüst: Sphinx + pydata-Theme + MyST + `sphinx-gallery` (ADR 4); ADRs 1–4; Deployment auf GitHub Pages | `sphinx-build -W` grün | ✅ |
-| 0.7 | Namen auf PyPI sichern: Trusted Publisher einrichten, Release `0.0.1` per Tag `v0.0.1` | Name reserviert | offen |
+| 0.7 | Trusted Publisher auf PyPI einrichten (Pending Publisher) | Release per Tag möglich | ✅ (kein Platzhalter-Release, direkt 0.1.0) |
 | 0.8 | Testdaten: 27 NIST-StRD-Datensätze in `tests/data/nist/`, Loader `tests/nist_strd.py` mit Modellfunktionen; Prüfung: zertifizierte Werte reproduzieren die zertifizierte RSS (rel. 1e-8) | `tests/test_nist_fixtures.py` grün | ✅ |
 
 Befund aus 0.8: In `Rat43.dat` stehen 9 Freiheitsgrade, korrekt sind 11 (15 − 4). Die zertifizierte Residuen-Standardabweichung rechnet mit 11. Der Loader liefert deshalb `dof` berechnet und `dof_stated` wie in der Datei.
@@ -77,7 +77,7 @@ Fehlschläge von Start 1: Lanczos3, Kirby2, Hahn1, BoxBOD, Bennett5. Das v0.1-Zi
 
 ### Stand (2026-10-22)
 
-Erledigt: 1.1–1.12. Offen: Release 0.1.0 (wartet auf die PyPI-Einrichtung, 0.7) und Testnutzer:innen.
+Erledigt: 1.1–1.12, Release 0.1.0. Offen: Ankündigung an Testnutzer:innen.
 
 Abweichungen vom Plan:
 
@@ -105,8 +105,9 @@ Abweichungen vom Plan:
 - [x] Die drei Zeilen aus Vision §2 laufen und liefern Report und Plot
 - [x] NIST StRD von Startpunkt 1: 27/27 (auch von Startpunkt 2)
 - [x] Coverage ≥ 90 %, `mypy --strict` grün (98 %)
-- [x] Doku mit Quickstart und 10 Beispielen (online nach Merge)
-- [ ] Release `0.1.0` auf PyPI; Ankündigung an 5–10 Testnutzer:innen mit Feedback-Formular
+- [x] Doku online mit Quickstart und 10 Beispielen
+- [x] Release `0.1.0` auf PyPI
+- [ ] Ankündigung an 5–10 Testnutzer:innen mit Feedback-Formular
 
 ---
 
@@ -207,5 +208,5 @@ Abweichungen vom Plan:
 
 ## Nächste Schritte
 
-1. PyPI: Trusted Publisher für `maroba/fitwise` / `release.yml` / Environment `pypi` einrichten, dann Tag `v0.0.1` (0.7).
-2. Mit 1.1 (Kerntypen) beginnen: Das Backend-Protokoll ist die wichtigste Designentscheidung im Code und sollte vor allem anderen stehen.
+1. Ankündigung von 0.1.0 an 5–10 Testnutzer:innen mit je einem echten Datensatz; Feedback sammeln.
+2. Phase 2 (v0.2): Linearitätserkennung und direkte Lösung (2.1, 2.2), dann die Startwert-Kaskade für freie Funktionen (2.3–2.6).

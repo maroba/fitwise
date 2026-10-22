@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 from scipy import stats
@@ -20,6 +20,8 @@ from fitwise.parameters import Parameter, Parameters
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
+
+    from fitwise.bands import Band
 
 __all__ = ["FitResult"]
 
@@ -178,13 +180,35 @@ class FitResult:
         n_warn = f", {len(self.warnings)} warning(s)" if self.warnings else ""
         return f"<FitResult {self.model.name}: {status}{', ' + quality if quality else ''}{n_warn}>"
 
+    def confidence_band(self, x: ArrayLike, level: float = 0.95) -> Band:
+        """Band containing the true curve with probability ``level``; see :mod:`fitwise.bands`."""
+        from fitwise.bands import confidence_band
+
+        return confidence_band(self, x, level)
+
+    def prediction_band(
+        self, x: ArrayLike, level: float = 0.95, *, yerr_new: ArrayLike | None = None
+    ) -> Band:
+        """Band containing a new measurement with probability ``level``."""
+        from fitwise.bands import prediction_band
+
+        return prediction_band(self, x, level, yerr_new=yerr_new)
+
     def plot(
-        self, *, residuals: bool = True, ax: Axes | None = None, show_params: bool = False
+        self,
+        *,
+        residuals: bool = True,
+        band: Literal["confidence", "prediction"] | None = "confidence",
+        level: float = 0.95,
+        ax: Axes | None = None,
+        show_params: bool = False,
     ) -> tuple[Figure, list[Axes]]:
-        """Plot data, fit and (optionally) residuals; see :func:`fitwise.plotting.plot_result`."""
+        """Plot data, fit, band and residuals; see :func:`fitwise.plotting.plot_result`."""
         from fitwise.plotting import plot_result
 
-        return plot_result(self, residuals=residuals, ax=ax, show_params=show_params)
+        return plot_result(
+            self, residuals=residuals, band=band, level=level, ax=ax, show_params=show_params
+        )
 
     def to_dict(self, *, include_data: bool = False) -> dict[str, Any]:
         """JSON-serializable record of the fit; see :func:`fitwise.serialize.to_dict`."""
@@ -259,7 +283,9 @@ def build_result(
                 fixed=name in problem.fixed,
             )
             for name in model.param_names
-        ]
+        ],
+        covariance=cov,
+        free_names=free,
     )
     result = FitResult(
         model=model,

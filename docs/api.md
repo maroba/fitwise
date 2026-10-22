@@ -48,6 +48,13 @@
    :members:
 ```
 
+## Bands
+
+```{eval-rst}
+.. automodule:: fitwise.bands
+   :members: Band, confidence_band, prediction_band, model_jacobian
+```
+
 ## Warnings
 
 ```{eval-rst}

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 
@@ -31,6 +31,8 @@ def plot_result(
     result: FitResult,
     *,
     residuals: bool = True,
+    band: Literal["confidence", "prediction"] | None = "confidence",
+    level: float = 0.95,
     ax: Axes | None = None,
     show_params: bool = False,
     n_points: int = 500,
@@ -44,6 +46,11 @@ def plot_result(
     residuals : bool
         Add a residual panel below the main plot (normalized by ``yerr`` if given).
         Ignored if ``ax`` is given.
+    band : {"confidence", "prediction"} or None
+        Shade the confidence band (where the true curve lies) or the prediction band (where
+        new measurements fall). Skipped if the covariance is not available.
+    level : float
+        Coverage probability of the band.
     ax : matplotlib.axes.Axes, optional
         Draw into existing axes instead of creating a new figure.
     show_params : bool
@@ -92,6 +99,15 @@ def plot_result(
             value, err = format_measurement(p.value, p.stderr)
             rows.append(f"{p.name} = {value}" + ("" if err == "–" else f" ± {err}"))
         label = "\n".join(["fit", *rows])
+    if band is not None and result.covariance is not None:
+        from fitwise.bands import confidence_band, describe, prediction_band
+
+        try:
+            b = (confidence_band if band == "confidence" else prediction_band)(result, xs, level)
+        except ValueError:
+            b = None  # e.g. prediction band with point-dependent yerr
+        if b is not None:
+            main.fill_between(xs, b.lower, b.upper, color="C1", alpha=0.25, lw=0, label=describe(b))
     curve = np.broadcast_to(result.eval(xs), xs.shape)
     main.plot(xs, curve, color="C1", lw=1.8, label=label, zorder=3)
     main.set_ylabel("y")

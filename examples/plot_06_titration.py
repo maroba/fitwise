@@ -12,7 +12,7 @@ import numpy as np
 
 import fitwise as fw
 
-rng = np.random.default_rng(6)
+rng = np.random.default_rng(7)
 volume = np.linspace(0, 20, 41)  # mL
 ph = 4.0 + 6.5 / (1 + np.exp(-(volume - 12.3) / 0.45)) + rng.normal(0, 0.05, volume.size)
 

@@ -11,7 +11,7 @@ import numpy as np
 
 import fitwise as fw
 
-rng = np.random.default_rng(8)
+rng = np.random.default_rng(10)
 voltage = np.linspace(10, 200, 25)  # V
 current = 0.018 * voltage**1.5 * (1 + rng.normal(0, 0.02, voltage.size))  # mA
 dI = 0.02 * current

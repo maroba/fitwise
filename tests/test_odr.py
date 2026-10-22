@@ -121,6 +121,23 @@ class TestBehaviour:
         assert r.covariance is None
         assert r.converged  # parameters converged; only the covariance is undetermined
 
+    def test_redundant_parameters_independent_of_odrpack_rank_test(self, monkeypatch):
+        """Regression: on Linux, ODRPACK's own rank test reported full rank (BLAS rounding)."""
+        import dataclasses
+
+        import odrpack
+
+        real = odrpack.odr_fit
+
+        def full_rank_claimed(*args, **kwargs):
+            return dataclasses.replace(real(*args, **kwargs), irank=0)
+
+        monkeypatch.setattr(odrpack, "odr_fit", full_rank_claimed)
+        with pytest.warns(fw.warnings.FitWarning) as record:
+            r = fw.fit(lambda x, a, b: (a + b) * x + 5.5, X, Y, yerr=YERR, xerr=XERR)
+        assert r.covariance is None
+        assert fw.warnings.SingularCovarianceWarning in {type(w.message) for w in record}
+
     def test_plot_bands_export(self, york):
         fig, axes = york.plot()
         container = axes[0].containers[0]

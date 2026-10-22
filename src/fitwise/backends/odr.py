@@ -14,6 +14,7 @@ import numpy as np
 
 from fitwise._typing import FloatArray
 from fitwise.backends.base import Backend, BackendResult, FitProblem
+from fitwise.backends.least_squares import _central_jacobian, _covariance
 
 
 def _odrpack() -> Any:
@@ -64,8 +65,22 @@ class OdrBackend:
             )
         # ODRPACK reports the covariance without the factor res_var (= χ²/ndf), as scipy.odr
         cov = np.asarray(run.cov_beta, dtype=float)
-        # irank is ODRPACK's rank *deficiency* of the Jacobian: 0 means full rank
-        full_rank = int(run.irank) == 0 and bool(np.all(np.isfinite(cov)))
+        # irank is ODRPACK's rank *deficiency* of the Jacobian (0 = full rank). Its rank test
+        # depends on the platform's BLAS, so the same test as in the other backends decides as
+        # well: the Jacobian in normalized parameters at the adjusted x must not be singular.
+        beta = np.asarray(run.beta, dtype=float)
+        scale = np.where(beta != 0, np.abs(beta), 1.0)
+        xplusd = np.asarray(run.xplusd, dtype=float)
+        yerr = data.yerr
+
+        def scaled_model(u: FloatArray) -> FloatArray:
+            return f(xplusd, u * scale) / yerr
+
+        with np.errstate(all="ignore"):
+            jac = _central_jacobian(scaled_model, beta / scale)
+        full_rank = (
+            int(run.irank) == 0 and bool(np.all(np.isfinite(cov))) and _covariance(jac) is not None
+        )
         cov_unscaled = cov if full_rank else None
         # ODRPACK's info: last digit 1-3 = convergence criterion met; leading digit 4 =
         # questionable (e.g. rank deficient, reported separately), 5 or more = fatal error

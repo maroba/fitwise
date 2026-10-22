@@ -331,3 +331,19 @@ def test_constant_plus_exponential_report_mentions_baseline():
     r = fw.fit(exponential + constant, x, y)
     assert r.guess_strategy["c"] == "edge baseline"
     assert r.params["tau"].value == pytest.approx(2, rel=0.01)
+
+
+def test_far_off_starting_values_still_give_uncertainties(rng):
+    """Regression (0.1.1): the covariance used to come from the first run's normalization."""
+    temp = np.linspace(280, 380, 12)
+    k = 2.6e11 * np.exp(-42_690 / (8.314 * temp))
+    k = k * (1 + rng.normal(0, 0.01, temp.size))
+
+    def arrhenius(t, A, Ea):  # noqa: N803
+        return A * np.exp(-Ea / (8.314 * t))
+
+    far = fw.fit(arrhenius, temp, k, yerr=0.01 * k, p0={"A": 1.0, "Ea": 1.0})
+    near = fw.fit(arrhenius, temp, k, yerr=0.01 * k, p0={"A": 2.6e11, "Ea": 42_690})
+    assert far.ok
+    np.testing.assert_allclose(far.params.as_array(), near.params.as_array(), rtol=1e-6)
+    np.testing.assert_allclose(far.covariance, near.covariance, rtol=1e-3)

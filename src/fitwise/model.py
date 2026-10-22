@@ -308,14 +308,13 @@ class CompositeModel(Model):
 
 
 def as_model(obj: Model | Callable[..., ArrayLike] | str) -> Model:
-    """Convert a function to a :class:`Model`; models pass through unchanged."""
+    """Convert a function or expression string to a :class:`Model`; models pass through."""
     if isinstance(obj, Model):
         return obj
     if isinstance(obj, str):
-        raise NotImplementedError(
-            "String models such as 'a*exp(-x/tau)' are planned for fitwise 0.2. "
-            "For now, define a Python function: def f(x, a, tau): return a*np.exp(-x/tau)"
-        )
+        from fitwise.expression import ExpressionModel
+
+        return ExpressionModel(obj)
     if callable(obj):
         return Model(obj)
     raise TypeError(f"expected a Model or a function, got {type(obj).__name__}")

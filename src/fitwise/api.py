@@ -52,9 +52,10 @@ def fit(
 
     Parameters
     ----------
-    model : Model or callable
+    model : Model, callable or str
         A built-in model from :mod:`fitwise.models`, a composition such as
-        ``gaussian + linear``, or a function ``f(x, p1, p2, ...)``.
+        ``gaussian + linear``, a function ``f(x, p1, p2, ...)``, or an expression such as
+        ``"a*exp(-x/tau) + c"`` (see :class:`fitwise.ExpressionModel`).
     x : array_like
         Independent variable, shape ``(n,)`` or ``(n, k)``; passed to the model unchanged.
     y : array_like

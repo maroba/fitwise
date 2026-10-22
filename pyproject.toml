@@ -121,6 +121,8 @@ convention = "numpy"
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["D"]
 "conftest.py" = ["D"]
+# sphinx-gallery: titled docstrings, imports per cell, physics symbols such as T or Ea
+"examples/**" = ["D", "E402", "N803", "N806", "N816"]
 "docs/**" = ["D"]
 
 # --- mypy ---------------------------------------------------------------

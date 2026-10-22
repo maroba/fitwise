@@ -214,7 +214,7 @@ src/fitwise/
 
 1. **Ein Rückgabetyp.** `FitResult` sieht immer gleich aus, egal welcher Solver lief.
 2. **Keine stillen Entscheidungen.** Jede Automatik (Solverwahl, Startwerte, Kovarianzskalierung) ist im Result dokumentiert und überschreibbar.
-3. **Warnungen statt falscher Zahlen.** Nicht konvergiert, Parameter an der Grenze, χ²/ndf außerhalb des 99-%-Intervalls, Korrelation > 0.95, singuläre Kovarianz, Unsicherheit > 100 %: Alles erscheint in `result.warnings` und im Report und wird als `FitWarning` über das `warnings`-Modul emittiert. Ein nicht konvergierter Fit hat `result.ok == False`.
+3. **Warnungen statt falscher Zahlen.** Nicht konvergiert, Parameter an der Grenze, χ²/ndf außerhalb des 99-%-Intervalls, Korrelation > 0.999 (Korrelationen > 0.5 stehen als Information im Report), singuläre Kovarianz, Unsicherheit > 100 %: Alles erscheint in `result.warnings` und im Report und wird als `FitWarning` über das `warnings`-Modul emittiert. Ein nicht konvergierter Fit hat `result.ok == False`.
 4. **Reproduzierbar.** `result.to_dict()` enthält alles, um den Fit exakt zu wiederholen: Modell-Identität, Daten-Hash, Startwerte inkl. Strategie, Solver und Optionen, Seed des Multi-Starts, Versionen.
 5. **Dünn bleiben.** Wer mehr braucht, bekommt mit `result.raw` das Objekt des darunterliegenden Backends (z. B. `scipy.optimize.OptimizeResult`).
 6. **Schnell genug für Pipelines.** Der Overhead gegenüber direktem `curve_fit` liegt bei einem Gaußfit mit 1000 Punkten unter 5 ms. Lazy Imports für alle optionalen Pakete.

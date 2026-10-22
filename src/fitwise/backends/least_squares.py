@@ -72,17 +72,20 @@ class LeastSquaresBackend:
             def residual(u: FloatArray, scale: FloatArray = scale) -> FloatArray:
                 return problem.weighted_residual(dict(zip(names, u * scale, strict=True)))
 
-            run = least_squares(
-                residual,
-                p / scale,
-                jac="3-point" if self.method == "trf" else partial(_central_jacobian, residual),
-                bounds=(lo / scale, hi / scale) if self.method == "trf" else (-np.inf, np.inf),
-                method=self.method,
-                xtol=self.tol,
-                ftol=self.tol,
-                gtol=self.tol,
-                max_nfev=self.max_nfev,
-            )
+            # Trial points may overflow; the solver rejects such steps by itself, and the final
+            # result is checked separately, so floating-point warnings here are only noise.
+            with np.errstate(all="ignore"):
+                run = least_squares(
+                    residual,
+                    p / scale,
+                    jac="3-point" if self.method == "trf" else partial(_central_jacobian, residual),
+                    bounds=(lo / scale, hi / scale) if self.method == "trf" else (-np.inf, np.inf),
+                    method=self.method,
+                    xtol=self.tol,
+                    ftol=self.tol,
+                    gtol=self.tol,
+                    max_nfev=self.max_nfev,
+                )
             nfev += int(run.nfev)
             cost = 2 * float(run.cost)
             if result is not None and not cost < best_cost * (1 - 1e-13):

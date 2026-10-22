@@ -162,8 +162,23 @@ class FitResult:
 
     @property
     def normalized_residuals(self) -> FloatArray:
-        """``(y − f(x)) / yerr``; equals :attr:`residuals` without ``yerr``."""
-        return self.residuals * self.data.weights
+        """``(y − f(x)) / σ``; equals :attr:`residuals` without ``yerr``.
+
+        σ is ``yerr``, or with ``xerr`` the effective uncertainty √(yerr² + (f′(x)·xerr)²).
+        """
+        sigma = self.effective_yerr
+        return self.residuals if sigma is None else self.residuals / sigma
+
+    @property
+    def effective_yerr(self) -> FloatArray | None:
+        """``yerr``, or √(yerr² + (f′(x)·xerr)²) if ``x`` has uncertainties too."""
+        xerr = self.data.xerr
+        if self.yerr is None or xerr is None:
+            return self.yerr
+        x = self.x
+        h = 1e-6 * np.maximum(np.abs(x), 1.0) + 1e-6 * np.ptp(x)
+        slope = (self.eval(x + h) - self.eval(x - h)) / (2 * h)
+        return np.asarray(np.hypot(self.yerr, slope * xerr), dtype=float)
 
     # --- output -------------------------------------------------------------------------
 
@@ -238,7 +253,9 @@ def build_result(
 
     w = data.weights
     resid = data.y - np.broadcast_to(model.eval(data.x, values), data.y.shape)
-    chi2 = float(np.sum((resid * w) ** 2))
+    vertical_chi2 = float(np.sum((resid * w) ** 2))
+    # ODR minimizes deviations in x and y; its χ² is the backend's own objective
+    chi2 = solved.chi2 if solved.chi2 is not None else vertical_chi2
     rss = float(resid @ resid)
     n, k = data.n, len(free)
     ndf = n - k
@@ -246,7 +263,7 @@ def build_result(
     has_yerr = data.yerr is not None
     pvalue = float(stats.chi2.sf(chi2, ndf)) if has_yerr and ndf > 0 else None
     residual_sd = math.sqrt(rss / ndf) if ndf > 0 else None
-    r2 = _r_squared(data.y, w, chi2)
+    r2 = _r_squared(data.y, w, vertical_chi2)  # explained variance in y, also for ODR
     log_term = n * math.log(chi2 / n) if chi2 > 0 else -math.inf
     aic, bic = log_term + 2 * k, log_term + k * math.log(n)
 

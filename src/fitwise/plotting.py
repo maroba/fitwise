@@ -81,8 +81,9 @@ def plot_result(
 
     x, y, yerr = result.x, result.y, result.yerr
     main.errorbar(
-        x, y, yerr=yerr, fmt="o", ms=3, lw=1, capsize=0, color="C0", label="data", zorder=2
-    )
+        x, y, yerr=yerr, xerr=result.data.xerr, fmt="o", ms=3, lw=1, capsize=0, color="C0",
+        label="data", zorder=2,
+    )  # fmt: skip
 
     out = result.downweighted
     if out.any():

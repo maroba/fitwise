@@ -22,6 +22,7 @@ from fitwise.backends import Backend, FitProblem, LeastSquaresBackend, LinearBac
 from fitwise.backends.least_squares import Loss
 from fitwise.backends.linear import is_linear
 from fitwise.backends.multistart import MultiStartBackend
+from fitwise.backends.odr import OdrBackend
 from fitwise.backends.robust import ROBUST_LOSSES, RobustBackend
 from fitwise.model import Model, as_model
 from fitwise.result import FitResult, build_result
@@ -29,10 +30,6 @@ from fitwise.result import FitResult, build_result
 __all__ = ["fit"]
 
 Method = Literal["auto", "trf", "lm", "linear", "odr", "multistart"]
-
-_PLANNED = {
-    "odr": "0.3",
-}
 
 
 def fit(
@@ -66,8 +63,9 @@ def fit(
     yerr : float or array_like, optional
         Absolute one-sigma uncertainties of ``y``. Without ``yerr``, uncertainties are
         estimated from the scatter of the residuals.
-    xerr : array_like, optional
-        Uncertainties of ``x`` (orthogonal distance regression; planned for 0.3).
+    xerr : float or array_like, optional
+        Absolute one-sigma uncertainties of ``x``. The fit then uses orthogonal distance
+        regression (``odrpack``, ``pip install 'fitwise[odr]'``), which also needs ``yerr``.
     p0 : dict, optional
         Starting values ``{name: value}``; override any heuristic per parameter.
     bounds : dict, optional
@@ -109,16 +107,21 @@ def fit(
     """
     m = as_model(model)
     if xerr is not None:
-        raise NotImplementedError(
-            "xerr (orthogonal distance regression) is planned for fitwise 0.3"
-        )
+        if yerr is None:
+            raise ValueError("xerr needs yerr as well: ODR weighs deviations in x against y")
+        if method not in ("auto", "odr"):
+            raise ValueError(f"method={method!r} ignores xerr; use method='auto' or 'odr'")
+        if loss != "linear":
+            raise ValueError("robust losses are not available together with xerr")
+    elif method == "odr":
+        raise ValueError("method='odr' needs xerr (and yerr)")
     if loss != "linear" and loss not in ROBUST_LOSSES:
         raise ValueError(f"unknown loss {loss!r}; choose 'linear' or one of {ROBUST_LOSSES}")
     if loss_scale is not None and not (math.isfinite(loss_scale) and loss_scale > 0):
         raise ValueError(f"loss_scale must be positive, got {loss_scale!r}")
     if loss != "linear" and method == "lm":
         raise ValueError("method='lm' does not support robust losses; use 'auto' or 'trf'")
-    data = validate_data(x, y, yerr, nan_policy)
+    data = validate_data(x, y, yerr, nan_policy, xerr)
 
     names = m.param_names
     p0_given = dict(p0 or {})
@@ -145,16 +148,24 @@ def fit(
     strategies.update(dict.fromkeys(fixed_values, "fixed"))
     problem = FitProblem(m, data, init, fixed_values, free_bounds)
     without_start = [n for n in problem.free_names if strategies[n].startswith("fallback")]
-    backend, reason = _select_backend(method, problem, without_start)
+    backend, reason = _select_backend("auto" if method == "odr" else method, problem, without_start)
     # a multi-start does not depend on the fallback values being valid
     _check_start(problem, strategies, finite=not isinstance(backend, MultiStartBackend))
     if isinstance(backend, LinearBackend):
         strategies.update(dict.fromkeys(problem.free_names, "not needed (linear model)"))
     elif isinstance(backend, MultiStartBackend):
         strategies.update(dict.fromkeys(backend.sample, "multi-start"))
+    if data.xerr is not None:
+        backend = OdrBackend(backend)
+        reason = "auto: xerr given" if method == "auto" else "requested"
     if loss != "linear":
         backend = RobustBackend(backend, loss, loss_scale)
         reason += f", robust ({loss})"
+    if isinstance(backend, (OdrBackend, RobustBackend)):
+        # the final stage starts from the ordinary fit; say where *its* start came from
+        for n in problem.free_names:
+            origin = strategies[n].replace("not needed (linear model)", "linear model")
+            strategies[n] = f"from ordinary fit ({origin})"
     solved = backend.solve(problem)
     result = build_result(
         problem,
@@ -262,8 +273,6 @@ def _select_backend(
         if problem.has_bounds:
             raise ValueError("method='lm' does not support bounds; use 'trf' or 'auto'")
         return LeastSquaresBackend("lm"), "requested"
-    if method in _PLANNED:
-        raise NotImplementedError(f"method={method!r} is planned for fitwise {_PLANNED[method]}")
     raise ValueError(
-        f"unknown method {method!r}; choose 'auto', 'linear', 'trf', 'lm' or 'multistart'"
+        f"unknown method {method!r}; choose 'auto', 'linear', 'trf', 'lm', 'multistart' or 'odr'"
     )

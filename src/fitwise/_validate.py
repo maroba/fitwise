@@ -23,6 +23,7 @@ class FitData:
     y: FloatArray
     yerr: FloatArray | None
     n_omitted: int = 0
+    xerr: FloatArray | None = None
 
     @property
     def n(self) -> int:
@@ -35,7 +36,11 @@ class FitData:
 
 
 def validate_data(
-    x: ArrayLike, y: ArrayLike, yerr: ArrayLike | None, nan_policy: NanPolicy
+    x: ArrayLike,
+    y: ArrayLike,
+    yerr: ArrayLike | None,
+    nan_policy: NanPolicy,
+    xerr: ArrayLike | None = None,
 ) -> FitData:
     """Convert to float arrays, check shapes and handle non-finite values."""
     if nan_policy not in ("raise", "omit"):
@@ -53,23 +58,33 @@ def validate_data(
     ea: FloatArray | None = None
     if yerr is not None:
         ea = np.broadcast_to(np.asarray(yerr, dtype=float), ya.shape).copy()
+    xe: FloatArray | None = None
+    if xerr is not None:
+        if xa.ndim != 1:
+            raise ValueError("xerr is only supported for one-dimensional x")
+        xe = np.broadcast_to(np.asarray(xerr, dtype=float), ya.shape).copy()
 
     finite = np.isfinite(ya) & np.isfinite(xa.reshape(len(ya), -1)).all(axis=1)
     if ea is not None:
         finite &= np.isfinite(ea)
+    if xe is not None:
+        finite &= np.isfinite(xe)
     n_bad = int((~finite).sum())
     if n_bad:
         if nan_policy == "raise":
             raise ValueError(
-                f"{n_bad} data point(s) contain NaN or inf in x, y or yerr. "
+                f"{n_bad} data point(s) contain NaN or inf in x, y, yerr or xerr. "
                 "Clean the data or pass nan_policy='omit' to drop them."
             )
         xa, ya = xa[finite], ya[finite]
         ea = None if ea is None else ea[finite]
+        xe = None if xe is None else xe[finite]
 
     if ea is not None and np.any(ea <= 0):
         raise ValueError("yerr must be strictly positive; zero uncertainty gives infinite weight")
-    return FitData(xa, ya, ea, n_bad)
+    if xe is not None and np.any(xe <= 0):
+        raise ValueError("xerr must be strictly positive; use xerr=None for exact x values")
+    return FitData(xa, ya, ea, n_bad, xe)
 
 
 def check_names(argument: str, given: Iterable[str], known: Iterable[str]) -> None:

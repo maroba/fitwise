@@ -12,6 +12,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   and `result.plot(band="confidence" | "prediction" | None)` (confidence band by default).
 - `result.params.as_ufloat()`: correlated `uncertainties` values for error propagation.
 - Monte Carlo calibration tests for standard errors and bands.
+- Uncertainties in x and y: `fit(..., xerr=dx, yerr=dy)` uses orthogonal distance regression
+  (`odrpack`, extra `[odr]`). The plot shows x error bars, and the residuals are normalized by
+  the effective uncertainty. `result.effective_yerr` gives that uncertainty.
 
 ## [0.2.0] - 2026-10-22
 

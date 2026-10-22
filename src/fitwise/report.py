@@ -70,7 +70,8 @@ def _data_line(result: FitResult) -> str:
         n += f" ({result.data.n_omitted} non-finite omitted)"
     if result.yerr is not None:
         how = "scaled by χ²/ndf" if result.scale_covar else "absolute"
-        return f"{n}, yerr given ({how})"
+        given = "xerr and yerr" if result.data.xerr is not None else "yerr"
+        return f"{n}, {given} given ({how})"
     if result.scale_covar:
         scatter = (
             "robust residual scatter" if result.robust_weights is not None else "residual scatter"

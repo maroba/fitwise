@@ -37,10 +37,15 @@ def _version(package: str) -> str | None:
         return None
 
 
-def data_hash(x: np.ndarray, y: np.ndarray, yerr: np.ndarray | None) -> str:
-    """SHA-256 over the data arrays (shape, dtype and bytes), to recognize identical data."""
+def data_hash(
+    x: np.ndarray, y: np.ndarray, yerr: np.ndarray | None, xerr: np.ndarray | None = None
+) -> str:
+    """SHA-256 over the data arrays (shape, dtype and bytes), to recognize identical data.
+
+    ``xerr`` only enters if given, so hashes of fits without it are the same as in 0.1.
+    """
     h = hashlib.sha256()
-    for arr in (x, y, yerr):
+    for arr in (x, y, yerr, *(() if xerr is None else (xerr,))):
         if arr is None:
             h.update(b"none")
             continue
@@ -71,12 +76,14 @@ def to_dict(result: FitResult, *, include_data: bool = False) -> dict[str, Any]:
         "n": result.data.n,
         "n_omitted": result.data.n_omitted,
         "has_yerr": result.yerr is not None,
-        "sha256": data_hash(result.x, result.y, result.yerr),
+        "has_xerr": result.data.xerr is not None,
+        "sha256": data_hash(result.x, result.y, result.yerr, result.data.xerr),
     }
     if include_data:
         data["x"] = result.x.tolist()
         data["y"] = result.y.tolist()
         data["yerr"] = None if result.yerr is None else result.yerr.tolist()
+        data["xerr"] = None if result.data.xerr is None else result.data.xerr.tolist()
 
     return {
         "schema_version": SCHEMA_VERSION,

@@ -19,6 +19,29 @@ The uncertainties are calibrated. In the radioactive-decay example, repeated wit
 different random seeds, the pulls (fit − truth)/σ have a mean of −0.06 and a standard deviation
 of 1.03, as they should.
 
+## Uncertainties in x and y
+
+If x has uncertainties too, pass `xerr` (and `yerr`):
+
+```python
+result = fw.fit(model, x, y, yerr=dy, xerr=dx)
+```
+
+fitwise then uses orthogonal distance regression (ODRPACK95 via `odrpack`,
+`pip install "fitwise[odr]"`). It first runs an ordinary fit in y, with all automatic starting
+values, and from that solution it minimizes Σ((y − f(x + δ))/yerr)² + Σ(δ/xerr)² over the
+parameters and the corrections δ of x. χ² in the report is this full sum. The residual plot is
+normalized by the effective uncertainty √(yerr² + (f′(x)·xerr)²), and the plot shows error bars
+in both directions.
+
+Ignoring `xerr` underestimates the parameter errors whenever f′(x)·xerr is not small against
+yerr. In the Ohm's-law example the factor is 4. fitwise reproduces the classic York/Pearson
+reference solution and agrees with `scipy.odr`.
+
+**Limitation:** ODRPACK cannot handle a solution that lies *on* a bound. fitwise then reports
+the fit as not converged and says so. Hold the parameter at the bound value with `fixed=`
+instead.
+
 ## Confidence and prediction bands
 
 ```python

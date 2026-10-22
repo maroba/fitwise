@@ -11,6 +11,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - Linear models are detected automatically and solved directly, without starting values;
   bounds use `scipy.optimize.lsq_linear`. `method="linear"` requests this explicitly.
 - NIST StRD linear regression suite (11 datasets) in the tests.
+- User functions without starting values: multi-start with variable projection (99.7 % on a
+  benchmark of 32 lab models). `method="multistart"` forces it for all parameters.
+- Benchmark catalog of 32 realistic models in the tests.
+
+### Fixed
+
+- Uncertainties were reported as unavailable ("singular covariance") when the starting values
+  were off by many orders of magnitude, although the fit itself had converged.
 
 ### Changed
 

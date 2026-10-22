@@ -50,6 +50,10 @@ def is_linear(problem: FitProblem, *, seed: int = 0) -> bool:
     a, f0 = design_matrix(problem)
     if not (np.all(np.isfinite(a)) and np.all(np.isfinite(f0))):
         return False
+    if np.any(np.all(a == 0, axis=0)):
+        # A parameter without any effect cannot be confirmed as linear: a Gaussian far outside
+        # the data range is exactly zero and would look like a constant model.
+        return False
     rng = np.random.default_rng(seed)
     start = np.array([problem.init[n] for n in names])
     scale = np.maximum(np.abs(start), 1.0)

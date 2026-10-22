@@ -132,6 +132,8 @@ Abweichungen vom Plan:
 
 **DoD v0.2:** NIST StRD ohne Startwerte: 100 % niedrige/mittlere, ≥ 80 % höhere Schwierigkeit; Konvergenzrate der Benchmarksuite ≥ 85 %; `result.guess_strategy` für jeden Parameter gesetzt und im Report sichtbar.
 
+**Stand 2.3–2.6, 2.9 (2026-10-22): erledigt, mit Abweichung (ADR 7).** Die Benchmarksuite (2.9, 32 Modelle) wurde zuerst gebaut. Multi-Start mit Variable Projection und datenbasierten Kandidaten (2.5, 2.6) erreicht 99.7 % von 3300 Fits; die Rollenanalyse (2.3, 2.4) wurde deshalb nicht implementiert. DoD v0.2: Benchmark ≥ 85 % ✅ (99.7 %); NIST ohne Startwerte: hoch 8/8 ✅, niedrig 7/8 und mittel 10/11 ❌ (Gauss2, Gauss3: zwei stark überlappende Peaks plus Zerfall als eine Black-Box-Funktion; mit eingebauten Modellen lösbar). `guess_strategy` für jeden Parameter gesetzt ✅.
+
 **Entscheidungspunkt nach 2.3:** Liefert die Rollenanalyse auf der Benchmarksuite weniger als 60 % korrekte Klassifikationen, wird sie auf Offset/Amplitude reduziert und der Rest über Multi-Start gelöst. Die Abweichung wird in der Vision dokumentiert.
 
 ---

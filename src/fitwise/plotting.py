@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Literal
 import numpy as np
 
 from fitwise.report import format_measurement
+from fitwise.units import format_unit
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -25,6 +26,11 @@ def _pyplot() -> Any:
             "plotting needs matplotlib; install it with: pip install 'fitwise[plot]'"
         ) from None
     return plt
+
+
+def _label(name: str, unit: Any) -> str:
+    text = format_unit(unit)
+    return f"{name} ({text})" if text else name
 
 
 def plot_result(
@@ -111,7 +117,7 @@ def plot_result(
             main.fill_between(xs, b.lower, b.upper, color="C1", alpha=0.25, lw=0, label=describe(b))
     curve = np.broadcast_to(result.eval(xs), xs.shape)
     main.plot(xs, curve, color="C1", lw=1.8, label=label, zorder=3)
-    main.set_ylabel("y")
+    main.set_ylabel(_label("y", result.data.y_unit))
     main.legend(frameon=False)
 
     if len(axes) == 2:
@@ -122,8 +128,8 @@ def plot_result(
         if out.any():
             res_ax.plot(x[out], r[out], "o", ms=7, mfc="none", mec="C3", mew=1.2)
         res_ax.set_ylabel("(y − f)/σ" if yerr is not None else "y − f")
-        res_ax.set_xlabel("x")
+        res_ax.set_xlabel(_label("x", result.data.x_unit))
     else:
-        main.set_xlabel("x")
+        main.set_xlabel(_label("x", result.data.x_unit))
     assert fig is not None
     return fig, axes  # type: ignore[return-value]

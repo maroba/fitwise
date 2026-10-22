@@ -45,6 +45,22 @@ class Parameter:
     guess_strategy: str
     bounds: Bounds = _UNBOUNDED
     fixed: bool = False
+    unit: Any = None
+    """pint unit of the parameter, if the fit had units (see :mod:`fitwise.units`)."""
+
+    @property
+    def quantity(self) -> Any:
+        """The value as a pint quantity (needs a known unit)."""
+        if self.unit is None:
+            raise ValueError(f"the unit of {self.name!r} is not known")
+        return self.value * self.unit
+
+    @property
+    def measurement(self) -> Any:
+        """Value ± standard error as a pint measurement, e.g. ``(2.33 ± 0.02) V``."""
+        if self.stderr is None:
+            raise ValueError(f"{self.name!r} has no standard error")
+        return self.quantity.plus_minus(self.stderr)
 
     @property
     def relative_error(self) -> float | None:

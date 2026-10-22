@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
+from fitwise.units import format_unit
+
 if TYPE_CHECKING:
     from fitwise.result import FitResult
 
@@ -88,7 +90,7 @@ def _start_line(result: FitResult) -> str:
 
 
 def _parameter_table(result: FitResult) -> list[str]:
-    header = ("Parameter", "Value", "± Std.Err", "Rel.", "Bounds")
+    header = ("Parameter", "Value", "± Std.Err", "Unit", "Rel.", "Bounds")
     rows = []
     for p in result.params.values():
         value, err = format_measurement(p.value, p.stderr)
@@ -100,14 +102,16 @@ def _parameter_table(result: FitResult) -> list[str]:
             bounds = "–"
         rel = p.relative_error
         rel_text = f"{100 * rel:.1f} %" if rel is not None and not p.fixed else "–"
-        rows.append((p.name, value, err, rel_text, bounds))
+        rows.append((p.name, value, err, format_unit(p.unit), rel_text, bounds))
+    show_units = any(r[3] for r in rows)
     widths = [max(len(r[i]) for r in [header, *rows]) for i in range(len(header))]
 
     def line(cells: tuple[str, ...]) -> str:
-        name, value, err, rel, bounds = cells
+        name, value, err, unit, rel, bounds = cells
+        unit_cell = f"{unit:<{widths[3]}}   " if show_units else ""
         return (
             f"{name:<{widths[0]}}   {value:>{widths[1]}}   {err:>{widths[2]}}   "
-            f"{rel:>{widths[3]}}   {bounds}"
+            f"{unit_cell}{rel:>{widths[4]}}   {bounds}"
         ).rstrip()
 
     return [line(header), *(line(r) for r in rows)]

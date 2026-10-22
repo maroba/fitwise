@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from fitwise.units import format_unit
+
 if TYPE_CHECKING:
     from fitwise.result import FitResult
 
@@ -77,6 +79,8 @@ def to_dict(result: FitResult, *, include_data: bool = False) -> dict[str, Any]:
         "n_omitted": result.data.n_omitted,
         "has_yerr": result.yerr is not None,
         "has_xerr": result.data.xerr is not None,
+        "x_unit": format_unit(result.data.x_unit) or None,
+        "y_unit": format_unit(result.data.y_unit) or None,
         "sha256": data_hash(result.x, result.y, result.yerr, result.data.xerr),
     }
     if include_data:
@@ -120,6 +124,7 @@ def to_dict(result: FitResult, *, include_data: bool = False) -> dict[str, Any]:
                 "guess_strategy": p.guess_strategy,
                 "bounds": [_float(p.bounds[0]), _float(p.bounds[1])],
                 "fixed": p.fixed,
+                "unit": format_unit(p.unit) or None,
             }
             for name, p in result.params.items()
         },

@@ -19,6 +19,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   exactly ±σ for linear models.
 - `result.bootstrap(n)`: parametric, residual or case bootstrap, with spread, percentile
   intervals and covariance of the parameters.
+- Units: `x`, `y`, `yerr`, `xerr`, `p0`, `bounds` and `fixed` may be pint quantities.
+  Parameters get units (declared by the built-in models, or set with `units=`), with
+  `Parameter.quantity` and `Parameter.measurement`. The report shows a unit column, and plot
+  axes are labelled with units.
 
 ## [0.2.0] - 2026-10-22
 

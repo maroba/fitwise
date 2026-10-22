@@ -152,14 +152,24 @@ class FitResult:
         }
         return dict(sorted(pairs.items(), key=lambda kv: -abs(kv[1])))
 
-    def eval(self, x: ArrayLike | None = None) -> FloatArray:
-        """Evaluate the fitted model at ``x`` (default: the data's ``x``)."""
-        return self.model.eval(self.x if x is None else x, self.params.values_dict())
+    def eval(self, x: ArrayLike | None = None) -> Any:
+        """Evaluate the fitted model at ``x`` (default: the data's ``x``).
+
+        If the fit had units and ``x`` is a quantity, the result is a quantity in y's unit.
+        """
+        from fitwise.units import attach, is_quantity, split
+
+        if x is None:
+            return self.model.eval(self.x, self.params.values_dict())
+        if is_quantity(x):
+            magnitude, _ = split(x, self.data.x_unit, name="x")
+            return attach(self.model.eval(magnitude, self.params.values_dict()), self.data.y_unit)
+        return self.model.eval(x, self.params.values_dict())
 
     @property
     def residuals(self) -> FloatArray:
         """``y − f(x)``."""
-        return self.y - np.broadcast_to(self.eval(), self.y.shape)
+        return np.asarray(self.y - np.broadcast_to(self.eval(), self.y.shape), dtype=float)
 
     @property
     def normalized_residuals(self) -> FloatArray:
@@ -259,6 +269,7 @@ def build_result(
     scale_covar: bool | None,
     method_reason: str,
     options: Mapping[str, Any],
+    param_units: Mapping[str, Any] | None = None,
 ) -> FitResult:
     """Assemble a :class:`FitResult` from a solved problem."""
     model, data = problem.model, problem.data
@@ -317,6 +328,7 @@ def build_result(
                 guess_strategy=strategies[name],
                 bounds=problem.bounds.get(name, (-math.inf, math.inf)),
                 fixed=name in problem.fixed,
+                unit=(param_units or {}).get(name),
             )
             for name in model.param_names
         ],

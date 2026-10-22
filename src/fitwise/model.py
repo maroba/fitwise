@@ -56,6 +56,10 @@ class Model:
         The model equation in LaTeX, for documentation and export.
     param_docs : mapping, optional
         ``{name: description}`` for documentation.
+    dims : mapping, optional
+        ``{name: (ex, ey)}``: the parameter's unit is ``unit(x)**ex * unit(y)**ey``, for
+        example ``(-1, 1)`` for a slope. ``None`` for a parameter whose unit depends on its
+        value (the amplitude of a power law). Used to attach units, see :mod:`fitwise.units`.
 
     Examples
     --------
@@ -82,6 +86,7 @@ class Model:
         abbrev: str | None = None,
         formula: str | None = None,
         param_docs: Mapping[str, str] | None = None,
+        dims: Mapping[str, tuple[float, float] | None] | None = None,
     ) -> None:
         if not callable(func):
             raise TypeError(f"model function must be callable, got {func!r}")
@@ -100,6 +105,7 @@ class Model:
         self.abbrev = abbrev or self.name[:1].lower()
         self.formula = formula
         self.param_docs = dict(param_docs or {})
+        self._base_dims = dict(dims or {})
         self.prefix = ""
         self._auto_prefix = False
 
@@ -114,6 +120,11 @@ class Model:
     def defaults(self) -> dict[str, float]:
         """Starting values from the function signature."""
         return {self.prefix + n: v for n, v in self._base_defaults.items()}
+
+    @property
+    def param_dims(self) -> dict[str, tuple[float, float] | None]:
+        """Unit exponents ``(ex, ey)`` of the parameters, where declared."""
+        return {self.prefix + n: d for n, d in self._base_dims.items()}
 
     @property
     def leaves(self) -> tuple[Model, ...]:
@@ -271,6 +282,13 @@ class CompositeModel(Model):
     def leaves(self) -> tuple[Model, ...]:
         """The elementary models in evaluation order."""
         return self.left.leaves + self.right.leaves
+
+    @property
+    def param_dims(self) -> dict[str, tuple[float, float] | None]:
+        """Unit exponents of all components; a product mixes units, so none are declared."""
+        if self.op != "+":
+            return {}
+        return {**self.left.param_dims, **self.right.param_dims}
 
     def with_prefix(self, prefix: str) -> Model:
         """Not supported; prefix the components instead."""

@@ -62,6 +62,13 @@
    :members: bootstrap, profile, BootstrapResult, ProfileResult, Interval
 ```
 
+## Units
+
+```{eval-rst}
+.. automodule:: fitwise.units
+   :members: parameter_units, format_unit
+```
+
 ## Warnings
 
 ```{eval-rst}

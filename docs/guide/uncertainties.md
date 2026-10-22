@@ -73,6 +73,38 @@ Q = np.pi * u["freq"] * u["tau"]
 print(f"{Q:.1uS}")       # e.g. 15.55(9)
 ```
 
+## Bootstrap and profile likelihood
+
+The standard errors come from the covariance matrix, which assumes that the model is nearly
+linear in its parameters over the size of the errors. With few points or strongly nonlinear
+models, two slower methods check this assumption:
+
+```python
+print(result.profile())        # asymmetric intervals from Δχ²
+print(result.bootstrap(1000))  # distribution of refitted parameters
+```
+
+**Profile likelihood.** For each parameter, the interval contains every value at which χ²,
+minimized over all other parameters, rises by at most Δχ² = 1 (for 68.3 %; `level=0.95` gives
+Δχ² = 3.84). Without `yerr`, Δχ² is scaled by χ²/ndf. For linear models the interval equals
+value ± σ exactly. Otherwise it can be asymmetric, as for a decay time from a few points:
+`tau = 0.782 −0.039 +0.041`. Edges that are never reached are reported as ±∞, and a bound
+ends the interval. In Monte Carlo tests, 68.3 % profile intervals cover the true value in about
+68 % of the cases.
+
+**Bootstrap.** Refits resampled data and reports the spread of the parameters, percentile
+intervals and the covariance. `method="auto"` follows the covariance convention:
+
+| `method` | Resampling | Use |
+|---|---|---|
+| `"parametric"` (auto with `yerr`) | fitted curve + Gaussian noise of size `yerr` | uncertainties are known |
+| `"residuals"` (auto without `yerr`) | fitted curve + resampled residuals | the observed scatter counts |
+| `"cases"` | data points drawn with replacement | also sensitive to a wrong model; needs many points |
+
+The parametric bootstrap reproduces the covariance errors of a linear model (ratio 1.00 on
+average over seeds). The residual bootstrap scales with √(χ²/ndf) of the data set. Both
+methods refit with the options of the original fit, starting from its solution.
+
 ## How often ±1σ contains the truth
 
 With `yerr`, the interval value ± standard error contains the true value in 68.3 % of the

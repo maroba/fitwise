@@ -154,7 +154,7 @@ Abweichungen vom Plan:
 | 3.6 | uncertainties-Brücke | `result.params.as_ufloat()` mit Korrelationen (`correlated_values`) | 0.5 |
 | 3.7 | Kalibrierungstest | Monte-Carlo-Überdeckung der 1σ-Intervalle für alle Methoden | 1 |
 
-**Stand 3.1, 3.2, 3.6, 3.7 (2026-10-22): erledigt.** ODR über `odrpack` zweistufig; geprüft gegen York/Pearson, `scipy.odr`, Grenzfall xerr → 0 und Monte Carlo. Einschränkung: aktive Bounds kann ODRPACK nicht (Meldung mit Hinweis auf `fixed=`). Bänder per Delta-Methode, Abdeckung 93–97 % für 95 %-Bänder. Offen: 3.3 Bootstrap, 3.4 Profile-Likelihood, 3.5 Einheiten.
+**Stand 3.1, 3.2, 3.6, 3.7 (2026-10-22): erledigt.** ODR über `odrpack` zweistufig; geprüft gegen York/Pearson, `scipy.odr`, Grenzfall xerr → 0 und Monte Carlo. Einschränkung: aktive Bounds kann ODRPACK nicht (Meldung mit Hinweis auf `fixed=`). Bänder per Delta-Methode, Abdeckung 93–97 % für 95 %-Bänder. 3.3 Bootstrap (parametrisch/Residuen/Fälle, `auto` passend zur Kovarianz-Konvention) und 3.4 Profile-Likelihood (eigene Implementierung über Refits statt `lmfit.conf_interval`, damit alle Backends inkl. ODR funktionieren) ebenfalls erledigt. Offen: 3.5 Einheiten.
 
 **DoD v0.3:** Überdeckung 68 ± 3 % für Kovarianz, Bootstrap und ODR in Monte-Carlo-Tests; ODR-Ergebnisse stimmen mit `odrpack` direkt überein; Beispiel „x- und y-Fehler“ in der Galerie.
 

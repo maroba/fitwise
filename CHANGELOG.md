@@ -15,6 +15,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - Uncertainties in x and y: `fit(..., xerr=dx, yerr=dy)` uses orthogonal distance regression
   (`odrpack`, extra `[odr]`). The plot shows x error bars, and the residuals are normalized by
   the effective uncertainty. `result.effective_yerr` gives that uncertainty.
+- `result.profile()`: profile-likelihood intervals, asymmetric where the model is nonlinear;
+  exactly ±σ for linear models.
+- `result.bootstrap(n)`: parametric, residual or case bootstrap, with spread, percentile
+  intervals and covariance of the parameters.
 
 ## [0.2.0] - 2026-10-22
 

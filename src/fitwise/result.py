@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
     from fitwise.bands import Band
+    from fitwise.intervals import BootstrapResult, ProfileResult
 
 __all__ = ["FitResult"]
 
@@ -208,6 +209,24 @@ class FitResult:
         from fitwise.bands import prediction_band
 
         return prediction_band(self, x, level, yerr_new=yerr_new)
+
+    def bootstrap(
+        self,
+        n: int = 1000,
+        *,
+        method: Literal["auto", "parametric", "residuals", "cases"] = "auto",
+        seed: int = 0,
+    ) -> BootstrapResult:
+        """Refit resampled data; see :func:`fitwise.intervals.bootstrap`."""
+        from fitwise.intervals import bootstrap
+
+        return bootstrap(self, n, method=method, seed=seed)
+
+    def profile(self, names: list[str] | None = None, *, level: float = 0.6827) -> ProfileResult:
+        """Profile-likelihood intervals; see :func:`fitwise.intervals.profile`."""
+        from fitwise.intervals import ONE_SIGMA, profile
+
+        return profile(self, names, level=ONE_SIGMA if level == 0.6827 else level)
 
     def plot(
         self,

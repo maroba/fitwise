@@ -14,16 +14,25 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - User functions without starting values: multi-start with variable projection (99.7 % on a
   benchmark of 32 lab models). `method="multistart"` forces it for all parameters.
 - Benchmark catalog of 32 realistic models in the tests.
-
-### Fixed
-
-- Uncertainties were reported as unavailable ("singular covariance") when the starting values
-  were off by many orders of magnitude, although the fit itself had converged.
+- Models as text: `fw.fit("a*exp(-x/tau) + c", x, y)`, validated against an allowlist;
+  `^` means power. `fw.ExpressionModel` for other variable names.
+- Robust fits against outliers: `loss="soft_l1" | "huber" | "cauchy" | "arctan"` with
+  `loss_scale`; downweighted points are reported, marked in the plot and available as
+  `result.downweighted`.
 
 ### Changed
 
 - `method="auto"` reports why it chose a solver: `auto: linear in the parameters` or
   `auto: nonlinear`.
+
+## [0.1.1] - 2026-10-22
+
+### Fixed
+
+- Uncertainties were reported as unavailable ("singular covariance") when the starting values
+  were off by many orders of magnitude, although the fit itself had converged. The covariance
+  now uses the Jacobian of the last solver run, which starts at the solution, instead of the
+  first run's Jacobian normalized by the starting values.
 
 ## [0.1.0] - 2026-10-22
 
@@ -42,5 +51,6 @@ First public release.
 - Text report, `plot()` with residual panel, `to_dict()` for JSON export.
 - Documentation: quickstart, guides on models and uncertainties, 10 gallery examples.
 
-[Unreleased]: https://github.com/maroba/fitwise/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/maroba/fitwise/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/maroba/fitwise/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/maroba/fitwise/releases/tag/v0.1.0

@@ -25,6 +25,12 @@
 .. autoclass:: fitwise.Model
    :members:
 
+.. autoclass:: fitwise.ExpressionModel
+   :members:
+
+.. autodata:: fitwise.expression.FUNCTIONS
+   :no-value:
+
 .. autoclass:: fitwise.CompositeModel
    :members:
 ```

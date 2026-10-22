@@ -22,6 +22,7 @@ result.plot()
 - {doc}`guide/quickstart`: installation, a first fit, reading the report
 - {doc}`guide/models`: built-in models, your own functions, composition, starting values
 - {doc}`guide/uncertainties`: what the error bars mean, χ²/ndf, warnings
+- {doc}`guide/robust`: fits that resist outliers
 - {doc}`auto_examples/index`: complete fits from typical lab experiments
 
 ```{toctree}
@@ -31,6 +32,7 @@ result.plot()
 guide/quickstart
 guide/models
 guide/uncertainties
+guide/robust
 auto_examples/index
 api
 adr/index

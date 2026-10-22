@@ -24,6 +24,24 @@ Every built-in model can be evaluated directly, which is handy for simulations:
 fw.models.gaussian(x, amp=2.0, cen=0.0, sigma=1.0)
 ```
 
+## Models as text
+
+For quick fits, write the model as an expression:
+
+```python
+result = fw.fit("a*exp(-x/tau) + c", x, y, yerr=dy)
+```
+
+Parameters are all names except `x`, the functions and `pi`, in order of first appearance.
+Available functions include `exp`, `log`/`ln`, `log10`, `sqrt`, `sin`, `cos`, `tan` and their
+inverses, the hyperbolic functions, `abs`, `erf`, `erfc` and `heaviside`; see
+{data}`fitwise.expression.FUNCTIONS`. As in Origin, Excel and MATLAB, `^` means power. For
+another variable name, use `fw.ExpressionModel("a*exp(-t/tau)", independent="t")`.
+
+Expressions are checked against an allowlist before anything runs. Only numbers, names,
+`+ - * / ** ^` and these functions are accepted, so an expression cannot access files or
+attributes.
+
 ## Your own functions
 
 Any function whose first argument is the independent variable works:

@@ -192,7 +192,6 @@ class TestGuessAndCanonicalize:
 def test_as_model():
     assert as_model(gaussian) is gaussian
     assert as_model(decay).param_names == ("amp", "tau")
-    with pytest.raises(NotImplementedError, match=r"0\.2"):
-        as_model("a*x")
+    assert as_model("a*x").param_names == ("a",)
     with pytest.raises(TypeError):
         as_model(3)  # type: ignore[arg-type]

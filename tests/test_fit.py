@@ -267,8 +267,6 @@ class TestInputValidation:
     def test_planned_features(self):
         with pytest.raises(NotImplementedError, match=r"0\.3"):
             fw.fit(linear, [0, 1, 2], [0, 1, 2], xerr=0.1)
-        with pytest.raises(NotImplementedError, match=r"0\.2"):
-            fw.fit(linear, [0, 1, 2], [0, 1, 2], loss="huber")
         with pytest.raises(NotImplementedError, match=r"0\.3"):
             fw.fit(linear, [0, 1, 2], [0, 1, 2], method="odr")
         with pytest.raises(ValueError, match="unknown method"):

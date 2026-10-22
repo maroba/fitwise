@@ -87,6 +87,17 @@ class FitResult:
     """The backend's native result object."""
     options: Mapping[str, Any] = field(default_factory=dict, repr=False)
     """The fit options as given by the user."""
+    loss: str = "linear"
+    """``"linear"`` for ordinary least squares, otherwise the robust loss used."""
+    robust_weights: FloatArray | None = field(default=None, repr=False)
+    """Robust weights at the solution (1 = normal point, ≪ 1 = outlier); ``None`` if not robust."""
+
+    @property
+    def downweighted(self) -> FloatArray:
+        """Boolean mask of points a robust fit treated as outliers (weight below 0.5)."""
+        if self.robust_weights is None:
+            return np.zeros(self.data.n, dtype=bool)
+        return np.asarray(self.robust_weights < 0.5)
 
     # --- convenience accessors ----------------------------------------------------------
 
@@ -215,6 +226,16 @@ def build_result(
     log_term = n * math.log(chi2 / n) if chi2 > 0 else -math.inf
     aic, bic = log_term + 2 * k, log_term + k * math.log(n)
 
+    robust_weights = solved.robust_weights
+    if robust_weights is not None:
+        # With outliers, χ² over all points says little. The robust χ²/ndf is the squared
+        # scatter of the weighted residuals estimated by 1.4826 · MAD, which outliers cannot
+        # inflate; it also scales the covariance without yerr.
+        rw = resid * w
+        mad = float(np.median(np.abs(rw - np.median(rw))))
+        redchi = (1.4826 * mad) ** 2 * n / ndf if ndf > 0 else None
+        pvalue = None
+
     scale = (not has_yerr) if scale_covar is None else scale_covar
     log = list(solved.log)
     cov: FloatArray | None = cov_unscaled
@@ -265,6 +286,8 @@ def build_result(
         solver_log=tuple(log),
         raw=solved.raw,
         options=dict(options),
+        loss=str(options.get("loss", "linear")),
+        robust_weights=robust_weights,
     )
     return _with_warnings(result)
 
@@ -292,7 +315,8 @@ def _with_warnings(result: FitResult) -> FitResult:
                 f"parameter(s) at a bound: {names}; their uncertainties are not reliable"
             )
         )
-    if result.yerr is not None and result.ndf > 0 and result.redchi is not None:
+    robust = result.robust_weights is not None
+    if result.yerr is not None and result.ndf > 0 and result.redchi is not None and not robust:
         lo, hi = stats.chi2.ppf([CHI2_ALPHA / 2, 1 - CHI2_ALPHA / 2], result.ndf)
         if result.chi2 > hi:
             found.append(

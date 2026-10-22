@@ -72,7 +72,10 @@ def _data_line(result: FitResult) -> str:
         how = "scaled by χ²/ndf" if result.scale_covar else "absolute"
         return f"{n}, yerr given ({how})"
     if result.scale_covar:
-        return f"{n}, no yerr (uncertainties from residual scatter)"
+        scatter = (
+            "robust residual scatter" if result.robust_weights is not None else "residual scatter"
+        )
+        return f"{n}, no yerr (uncertainties from {scatter})"
     return f"{n}, no yerr (unit weights, covariance not scaled)"
 
 
@@ -111,7 +114,12 @@ def _parameter_table(result: FitResult) -> list[str]:
 
 def _statistics_line(result: FitResult) -> str:
     parts = []
-    if result.yerr is not None and result.redchi is not None:
+    if result.robust_weights is not None and result.redchi is not None:
+        if result.yerr is not None:
+            parts.append(f"χ²/ndf (robust) = {result.redchi:.3g}")
+        else:
+            parts.append(f"σ_res (robust) = {math.sqrt(result.redchi):.4g}")
+    elif result.yerr is not None and result.redchi is not None:
         p = f", p = {result.pvalue:.2g}" if result.pvalue is not None else ""
         parts.append(f"χ²/ndf = {result.redchi:.3g} ({result.ndf} dof{p})")
     elif result.residual_sd is not None:
@@ -141,6 +149,12 @@ def text_report(result: FitResult) -> str:
         "",
         _statistics_line(result),
     ]
+    if result.robust_weights is not None:
+        n_down = int(result.downweighted.sum())
+        lines.append(
+            f"{'Robust:':<{_LABEL}}{result.loss} loss; {n_down} of {result.data.n} points "
+            "downweighted (weight < 0.5)"
+        )
     corr = result.correlations(REPORT_CORRELATION)
     if corr:
         pairs = ", ".join(f"{a}–{b} ({r:+.2f})" for (a, b), r in corr.items())
